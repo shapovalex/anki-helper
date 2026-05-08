@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decks — Anki Helper</title>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <h1>Decks</h1>
+    <div id="status"></div>
+    <ul id="deck-list"></ul>
+    <script src="/static/js/menu.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const status = document.getElementById('status');
+            const list = document.getElementById('deck-list');
+            try {
+                const res = await fetch('/api/decks');
+                if (!res.ok) {
+                    const { detail } = await res.json();
+                    status.textContent = detail ?? `Error ${res.status}`;
+                    return;
+                }
+                const { decks } = await res.json();
+                decks.forEach(name => {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    list.appendChild(li);
+                });
+            } catch {
+                status.textContent = 'Could not reach the server.';
+            }
+        });
+    </script>
+</body>
+</html>
