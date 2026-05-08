@@ -246,7 +246,9 @@
         }
 
         function startMicLevelLoop(stream) {
+            stopMicLevelLoop();
             audioContext = new AudioContext();
+            audioContext.resume();
             const source   = audioContext.createMediaStreamSource(stream);
             const analyser = audioContext.createAnalyser();
             analyser.fftSize = 256;
@@ -265,7 +267,7 @@
 
         function stopMicLevelLoop() {
             if (micLevelRafId) { cancelAnimationFrame(micLevelRafId); micLevelRafId = null; }
-            if (audioContext)  { audioContext.close(); audioContext = null; }
+            if (audioContext && audioContext.state !== 'closed') { audioContext.close(); audioContext = null; }
             const fill = document.getElementById('mic-bar-fill');
             if (fill) fill.style.width = '0%';
         }
