@@ -4,11 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anki Helper</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
 </head>
 <body>
     <div id="menu-container"></div>
-    <h1>Anki Helper</h1>
-    <p>Welcome to Anki Helper.</p>
+    <main class="page">
+        <div class="page-header">
+            <h1 class="page-title">Anki Helper</h1>
+            <p class="page-subtitle">AI-powered flashcard creation for French vocabulary.</p>
+        </div>
+
+        <div class="home-hero">
+            <p>Look up a French word to generate its translation, usage example, and audio — then add it directly to your Anki deck.</p>
+            <div class="home-actions">
+                <a href="/word-lookup" class="btn btn-primary">Word Lookup →</a>
+                <a href="/decks" class="btn btn-secondary">View Decks</a>
+                <a href="/settings" class="btn btn-secondary">Settings</a>
+            </div>
+        </div>
+    </main>
     <script src="/static/js/menu.js"></script>
 </body>
 </html>

@@ -4,53 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings — Anki Helper</title>
-    <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
-        label { display: block; font-size: 0.75em; text-transform: uppercase; color: #888; margin-bottom: 0.2em; }
-        input {
-            width: 100%; box-sizing: border-box; padding: 0.5rem;
-            border: 1px solid #ccc; border-radius: 4px; font-size: 1em; margin-bottom: 1rem;
-        }
-        button { padding: 0.5rem 1.5rem; border-radius: 4px; border: none; cursor: pointer; font-size: 1em; background: #4f8ef7; color: white; }
-        .hint { font-size: 0.75em; color: #999; margin-top: -0.8rem; margin-bottom: 1rem; }
-        .success-msg { color: #15803d; font-size: 0.9em; margin-left: 1rem; }
-        .error-msg   { color: #dc2626; font-size: 0.9em; margin-left: 1rem; }
-        h2 { margin-top: 2rem; font-size: 1em; text-transform: uppercase; color: #555; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
-    </style>
+    <link rel="stylesheet" href="/static/css/theme.css">
 </head>
 <body>
     <div id="menu-container"></div>
-    <h1>Settings</h1>
-    <p style="font-size:0.9em;color:#666;">All values are saved to <code>.env.local</code> on the server. System environment variables take priority over saved values.</p>
+    <main class="page page-sm">
+        <div class="page-header">
+            <h1 class="page-title">Settings</h1>
+            <p class="page-subtitle">Saved to <code>.env.local</code>. System environment variables take priority.</p>
+        </div>
 
-    <h2>OpenRouter</h2>
+        <p class="section-heading">OpenRouter</p>
 
-    <label>API Key</label>
-    <input type="password" id="openrouter-key" autocomplete="off" placeholder="sk-or-…">
+        <div class="field">
+            <label>API Key</label>
+            <input type="password" id="openrouter-key" autocomplete="off" placeholder="sk-or-…">
+        </div>
 
-    <label>Model</label>
-    <input type="text" id="openrouter-model" placeholder="google/gemini-flash-1.5">
-    <p class="hint">Default: google/gemini-flash-1.5. Browse models at openrouter.ai/models</p>
+        <div class="field">
+            <label>Model</label>
+            <input type="text" id="openrouter-model" placeholder="google/gemini-flash-1.5">
+            <p class="hint">Default: google/gemini-flash-1.5. Browse models at openrouter.ai/models.</p>
+        </div>
 
-    <h2>Azure Text-to-Speech</h2>
+        <p class="section-heading">Azure Text-to-Speech</p>
 
-    <label>API Key</label>
-    <input type="password" id="azure-key" autocomplete="off" placeholder="your azure key">
+        <div class="field">
+            <label>API Key</label>
+            <input type="password" id="azure-key" autocomplete="off" placeholder="your azure key">
+        </div>
 
-    <label>Region</label>
-    <input type="text" id="azure-region" placeholder="westeurope">
-    <p class="hint">Find your region in the Azure portal under your Speech resource.</p>
+        <div class="field">
+            <label>Region</label>
+            <input type="text" id="azure-region" placeholder="westeurope">
+            <p class="hint">Find your region in the Azure portal under your Speech resource.</p>
+        </div>
 
-    <h2>Anki</h2>
+        <p class="section-heading">Anki</p>
 
-    <label>Note Type Name</label>
-    <input type="text" id="note-type" placeholder="French-Russian">
-    <p class="hint">Must exactly match the note type you created in Anki with fields: french_word, russian_word, example, french_word_audio, example_audio.</p>
+        <div class="field">
+            <label>Note Type Name</label>
+            <input type="text" id="note-type" placeholder="French-Russian">
+            <p class="hint">Must exactly match the note type in Anki with fields: french_word, russian_word, example, french_word_audio, example_audio.</p>
+        </div>
 
-    <div>
-        <button onclick="saveSettings()">Save Settings</button>
-        <span id="status-msg"></span>
-    </div>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+            <span id="status-msg"></span>
+        </div>
+    </main>
 
     <script src="/static/js/menu.js"></script>
     <script>

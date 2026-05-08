@@ -4,17 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Decks — Anki Helper</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
 </head>
 <body>
     <div id="menu-container"></div>
-    <h1>Decks</h1>
-    <div id="status"></div>
-    <ul id="deck-list"></ul>
+    <main class="page page-sm">
+        <div class="page-header">
+            <h1 class="page-title">Decks</h1>
+            <p class="page-subtitle">All decks available in your Anki collection.</p>
+        </div>
+
+        <div id="status" class="status-msg"></div>
+        <ul id="deck-list" class="deck-list"></ul>
+    </main>
     <script src="/static/js/menu.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const status = document.getElementById('status');
-            const list = document.getElementById('deck-list');
+            const list   = document.getElementById('deck-list');
             try {
                 const res = await fetch('/api/decks');
                 if (!res.ok) {
@@ -23,13 +30,18 @@
                     return;
                 }
                 const { decks } = await res.json();
+                if (decks.length === 0) {
+                    status.textContent = 'No decks found.';
+                    return;
+                }
                 decks.forEach(name => {
                     const li = document.createElement('li');
+                    li.className = 'deck-item';
                     li.textContent = name;
                     list.appendChild(li);
                 });
             } catch {
-                status.textContent = 'Could not reach the server.';
+                status.textContent = 'Could not connect to Anki. Make sure Anki is running with AnkiConnect.';
             }
         });
     </script>

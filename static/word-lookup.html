@@ -4,111 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Lookup — Anki Helper</title>
-    <style>
-        body { font-family: sans-serif; max-width: 620px; margin: 2rem auto; padding: 0 1rem; }
-        label { display: block; font-size: 0.75em; text-transform: uppercase; color: #888; margin-bottom: 0.2em; }
-        input, select, textarea {
-            width: 100%; box-sizing: border-box; padding: 0.5rem;
-            border: 1px solid #ccc; border-radius: 4px; font-size: 1em; font-family: inherit;
-        }
-        textarea { resize: vertical; }
-        button { padding: 0.5rem 1rem; border-radius: 4px; border: none; cursor: pointer; font-size: 1em; }
-        .btn-primary { background: #4f8ef7; color: white; }
-        .btn-secondary { background: #e5e7eb; color: #333; }
-        .btn-success { background: #22c55e; color: white; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .banner { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; color: #dc2626; display: none; }
-        .eval-badge { border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 1rem; font-size: 0.9em; }
-        .eval-valid { background: #f0fdf4; border: 1px solid #86efac; color: #15803d; }
-        .eval-warning { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
-        .result-section { margin-top: 1.5rem; display: none; }
-        .field { margin-bottom: 1rem; }
-        .audio-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.3rem; }
-        .audio-row audio { flex: 1; height: 36px; }
-        .row { display: flex; gap: 0.75rem; }
-        .row > * { flex: 1; }
-        .inline-error { color: #dc2626; font-size: 0.85em; margin-top: 0.2rem; }
-        .success-msg { color: #15803d; font-size: 0.9em; }
-        audio { width: 100%; }
-    </style>
+    <link rel="stylesheet" href="/static/css/theme.css">
 </head>
 <body>
     <div id="menu-container"></div>
-
-    <div id="keys-banner" class="banner">
-        API keys not configured. <a href="/settings">Go to Settings</a>.
-    </div>
-
-    <h1>French Word Lookup</h1>
-
-    <div class="field">
-        <label>French Word</label>
-        <input type="text" id="word-input" placeholder="e.g. bonjour">
-    </div>
-
-    <div class="row" style="margin-bottom: 1rem;">
-        <div>
-            <label>CEFR Level</label>
-            <select id="cefr-select">
-                <option value="A1">A1</option>
-                <option value="A2">A2</option>
-                <option value="B1" selected>B1</option>
-                <option value="B2">B2</option>
-                <option value="C1">C1</option>
-                <option value="C2">C2</option>
-            </select>
+    <main class="page">
+        <div class="page-header">
+            <h1 class="page-title">Word Lookup</h1>
+            <p class="page-subtitle">Generate translation, example, and audio for a French word.</p>
         </div>
-        <div>
-            <label>Azure Voice</label>
-            <select id="voice-select"></select>
-        </div>
-    </div>
 
-    <button id="generate-btn" class="btn-primary" style="width:100%" disabled>⚡ Generate</button>
-    <div id="generate-error" class="inline-error"></div>
-
-    <div id="result-section" class="result-section">
-        <div id="eval-badge" class="eval-badge"></div>
-
-        <div class="field">
-            <label>Translation (Russian)</label>
-            <textarea id="translation" rows="2"></textarea>
+        <div id="keys-banner" class="banner banner-error">
+            API keys not configured. <a href="/settings">Go to Settings →</a>
         </div>
 
         <div class="field">
-            <label>Example (French)</label>
-            <textarea id="example" rows="3"></textarea>
+            <label>French Word</label>
+            <input type="text" id="word-input" placeholder="e.g. bonjour" autocomplete="off">
         </div>
 
-        <div class="field">
-            <label>Word Audio</label>
-            <div class="audio-row">
-                <audio id="word-audio" controls></audio>
-                <button class="btn-secondary" onclick="regenAudio('word')">↺ Re-generate</button>
+        <div class="row" style="margin-bottom: 1.25rem;">
+            <div class="field" style="margin-bottom: 0;">
+                <label>CEFR Level</label>
+                <select id="cefr-select">
+                    <option value="A1">A1</option>
+                    <option value="A2">A2</option>
+                    <option value="B1" selected>B1</option>
+                    <option value="B2">B2</option>
+                    <option value="C1">C1</option>
+                    <option value="C2">C2</option>
+                </select>
             </div>
-            <div id="word-audio-error" class="inline-error"></div>
-        </div>
-
-        <div class="field">
-            <label>Example Audio</label>
-            <div class="audio-row">
-                <audio id="example-audio" controls></audio>
-                <button class="btn-secondary" onclick="regenAudio('example')">↺ Re-generate</button>
+            <div class="field" style="margin-bottom: 0;">
+                <label>Azure Voice</label>
+                <select id="voice-select"></select>
             </div>
-            <div id="example-audio-error" class="inline-error"></div>
         </div>
 
-        <div class="row" style="align-items: flex-end; margin-bottom: 0.5rem;">
-            <div>
-                <label>Deck</label>
+        <button id="generate-btn" class="btn-primary btn-full" disabled>⚡ Generate</button>
+        <div id="generate-error" class="inline-error"></div>
+
+        <div id="result-section" class="result-section">
+            <div id="eval-badge" class="eval-badge"></div>
+
+            <div class="field">
+                <label>Translation (Russian)</label>
+                <textarea id="translation" rows="2"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Example (French)</label>
+                <textarea id="example" rows="3"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Word Audio</label>
+                <div class="audio-row">
+                    <audio id="word-audio" controls></audio>
+                    <button class="btn-secondary" onclick="regenAudio('word')">↺ Re-generate</button>
+                </div>
+                <div id="word-audio-error" class="inline-error"></div>
+            </div>
+
+            <div class="field">
+                <label>Example Audio</label>
+                <div class="audio-row">
+                    <audio id="example-audio" controls></audio>
+                    <button class="btn-secondary" onclick="regenAudio('example')">↺ Re-generate</button>
+                </div>
+                <div id="example-audio-error" class="inline-error"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="add-row">
+                <label style="flex-shrink:0; margin-bottom:0;">Deck</label>
                 <select id="deck-select"></select>
-            </div>
-            <div style="flex: 0; white-space: nowrap;">
                 <button id="add-anki-btn" class="btn-success" disabled onclick="addToAnki()">+ Add to Anki</button>
             </div>
+            <div id="add-anki-status" style="margin-top: 0.5rem;"></div>
         </div>
-        <div id="add-anki-status"></div>
-    </div>
+    </main>
 
     <script src="/static/js/menu.js"></script>
     <script>
@@ -121,7 +97,6 @@
         let noteTypeName       = 'French-Russian';
 
         async function init() {
-            // Load voices
             const vRes = await fetch('/api/word-lookup/voices');
             const { voices } = await vRes.json();
             const voiceSel = document.getElementById('voice-select');
@@ -132,7 +107,6 @@
                 voiceSel.appendChild(opt);
             });
 
-            // Restore saved preferences
             const savedCefr  = localStorage.getItem(LS_CEFR);
             const savedVoice = localStorage.getItem(LS_VOICE);
             if (savedCefr)  document.getElementById('cefr-select').value = savedCefr;
@@ -143,7 +117,6 @@
             voiceSel.addEventListener('change', e =>
                 localStorage.setItem(LS_VOICE, e.target.value));
 
-            // Check API keys
             const sRes     = await fetch('/api/settings');
             const settings = await sRes.json();
             noteTypeName   = settings.note_type;
@@ -154,7 +127,6 @@
                 document.getElementById('generate-btn').disabled = false;
             }
 
-            // Load Anki decks
             try {
                 const dRes    = await fetch('/api/decks');
                 const { decks } = await dRes.json();
@@ -169,25 +141,24 @@
                 if (savedDeck) deckSel.value = savedDeck;
                 deckSel.addEventListener('change', e =>
                     localStorage.setItem(LS_DECK, e.target.value));
-            } catch { /* Anki not running — deck select stays empty */ }
+            } catch { /* Anki not running */ }
         }
 
         async function generate() {
             const word = document.getElementById('word-input').value.trim();
             if (!word) return;
 
-            // Reset state
-            wordAudioBase64 = null;
+            wordAudioBase64    = null;
             exampleAudioBase64 = null;
             document.getElementById('add-anki-btn').disabled = true;
             document.getElementById('result-section').style.display = 'none';
             document.getElementById('generate-error').textContent = '';
-            document.getElementById('word-audio').src = '';
+            document.getElementById('word-audio').src    = '';
             document.getElementById('example-audio').src = '';
 
             const btn = document.getElementById('generate-btn');
             btn.textContent = '⏳ Generating…';
-            btn.disabled = true;
+            btn.disabled    = true;
 
             try {
                 const res = await fetch('/api/word-lookup/generate', {
@@ -215,17 +186,16 @@
 
                 document.getElementById('result-section').style.display = 'block';
 
-                // Fire both audio requests concurrently
                 const voice = document.getElementById('voice-select').value;
                 await Promise.all([
-                    generateAudio('word',    word,        voice),
+                    generateAudio('word',    word,         voice),
                     generateAudio('example', data.example, voice),
                 ]);
             } catch {
                 document.getElementById('generate-error').textContent = 'Network error.';
             } finally {
                 btn.textContent = '⚡ Generate';
-                btn.disabled = false;
+                btn.disabled    = false;
             }
         }
 
@@ -283,13 +253,13 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        deck:                    document.getElementById('deck-select').value,
-                        note_type:               noteTypeName,
-                        french_word:             document.getElementById('word-input').value.trim(),
-                        russian_word:            document.getElementById('translation').value,
-                        example:                 document.getElementById('example').value,
+                        deck:                     document.getElementById('deck-select').value,
+                        note_type:                noteTypeName,
+                        french_word:              document.getElementById('word-input').value.trim(),
+                        russian_word:             document.getElementById('translation').value,
+                        example:                  document.getElementById('example').value,
                         french_word_audio_base64: wordAudioBase64,
-                        example_audio_base64:    exampleAudioBase64,
+                        example_audio_base64:     exampleAudioBase64,
                     }),
                 });
 
