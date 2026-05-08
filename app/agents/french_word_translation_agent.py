@@ -40,4 +40,11 @@ class FrenchWordTranslationAgent:
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
-        return TranslationResult(**json.loads(content))
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"OpenRouter returned non-JSON content: {content!r}") from exc
+        try:
+            return TranslationResult(**data)
+        except Exception as exc:
+            raise ValueError(f"OpenRouter response missing required fields: {exc}") from exc
