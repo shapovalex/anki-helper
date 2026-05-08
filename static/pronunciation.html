@@ -594,17 +594,23 @@
             document.getElementById('record-btn').classList.remove('recording');
             document.getElementById('record-btn').textContent = '🎤 Hold to Record';
             currentAssessment = null;
+            const replayAudio = document.getElementById('replay-audio');
+            if (replayAudio) { replayAudio.pause(); replayAudio.src = ''; }
             const replayBtn = document.getElementById('replay-btn');
             if (replayBtn) replayBtn.style.display = 'none';
         }
 
         function playBackRecording() {
             if (!lastRecordingBlob) return;
-            const url = URL.createObjectURL(lastRecordingBlob);
             const audio = document.getElementById('replay-audio');
+            if (audio.src && audio.src.startsWith('blob:')) {
+                URL.revokeObjectURL(audio.src);
+            }
+            audio.pause();
+            const url = URL.createObjectURL(lastRecordingBlob);
             audio.src = url;
             audio.onended = () => URL.revokeObjectURL(url);
-            audio.play();
+            audio.play().catch(() => {});
         }
 
         async function answerCard(ease) {
