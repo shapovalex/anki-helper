@@ -26,7 +26,7 @@ class AudioAgent:
     async def synthesize(self, text: str, voice: str) -> str:
         url = f"https://{self._region}.tts.speech.microsoft.com/cognitiveservices/v1"
         lang = _lang_from_voice(voice)
-        ssml = _SSML_TEMPLATE.format(lang=lang, voice=escape(voice), text=escape(text))
+        ssml = _SSML_TEMPLATE.format(lang=escape(lang), voice=escape(voice), text=escape(text))
         response = await self._client.post(
             url,
             headers={
