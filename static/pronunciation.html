@@ -175,7 +175,11 @@
                         <div id="recs-content" style="display:none; margin-top:0.75rem;"></div>
                     </div>
 
-                    <button class="btn-secondary btn-full" style="margin-bottom:1rem;" onclick="resetForRecording()">🎤 Record Again</button>
+                    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                        <button class="btn-secondary" style="flex:1;" onclick="resetForRecording()">🎤 Record Again</button>
+                        <button class="btn-secondary" id="replay-btn" style="flex:1; display:none;" onclick="playBackRecording()">▶ Play back recording</button>
+                    </div>
+                    <audio id="replay-audio" style="display:none;"></audio>
 
                     <div class="divider"></div>
 
@@ -240,6 +244,7 @@
         let audioChunks     = [];
         let audioContext    = null;
         let micLevelRafId   = null;
+        let lastRecordingBlob = null;
 
         function scoreClass(n) {
             return n >= 80 ? 'score-green' : n >= 50 ? 'score-yellow' : 'score-red';
@@ -406,6 +411,7 @@
         // ── Recording ─────────────────────────────────────────────
         async function startRecording() {
             if (mediaRecorder && mediaRecorder.state === 'recording') return;
+            lastRecordingBlob = null;
             audioChunks = [];
             let stream;
             try {
@@ -436,6 +442,7 @@
             await new Promise(resolve => { mediaRecorder.onstop = resolve; });
 
             const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+            lastRecordingBlob = blob;
             const audioBase64 = await new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -538,6 +545,10 @@
             hide('recs-content');
             document.getElementById('recs-content').innerHTML = '';
             document.getElementById('recs-error').textContent = '';
+
+            // Show/hide replay button
+            const replayBtn = document.getElementById('replay-btn');
+            if (replayBtn) replayBtn.style.display = lastRecordingBlob ? '' : 'none';
         }
 
         // ── Recommendations ───────────────────────────────────────
@@ -583,6 +594,17 @@
             document.getElementById('record-btn').classList.remove('recording');
             document.getElementById('record-btn').textContent = '🎤 Hold to Record';
             currentAssessment = null;
+            const replayBtn = document.getElementById('replay-btn');
+            if (replayBtn) replayBtn.style.display = 'none';
+        }
+
+        function playBackRecording() {
+            if (!lastRecordingBlob) return;
+            const url = URL.createObjectURL(lastRecordingBlob);
+            const audio = document.getElementById('replay-audio');
+            audio.src = url;
+            audio.onended = () => URL.revokeObjectURL(url);
+            audio.play();
         }
 
         async function answerCard(ease) {
