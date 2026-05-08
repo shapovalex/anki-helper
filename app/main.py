@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.anki_client import AnkiClient
 from app.config import ConfigManager
 from app.routers import decks as decks_router
+from app.routers import pronunciation as pronunciation_router
 from app.routers import settings as settings_router
 from app.routers import word_lookup as word_lookup_router
 
@@ -25,6 +26,7 @@ app = FastAPI(title="Anki Helper", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(decks_router.router)
+app.include_router(pronunciation_router.router)
 app.include_router(settings_router.router)
 app.include_router(word_lookup_router.router)
 
