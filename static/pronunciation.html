@@ -247,7 +247,13 @@
                     sel.appendChild(o);
                 });
                 if (decks.length) {
-                    await loadFields(decks[0]);
+                    const lastDeck = lsGet(LS_LAST_DECK);
+                    if (lastDeck && [...sel.options].some(o => o.value === lastDeck)) {
+                        sel.value = lastDeck;
+                        await loadFields(lastDeck);
+                    } else {
+                        await loadFields(decks[0]);
+                    }
                     document.getElementById('start-btn').disabled = false;
                 }
             } catch {
