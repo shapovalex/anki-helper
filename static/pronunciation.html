@@ -260,9 +260,9 @@
                 show('anki-banner');
             }
 
-            document.getElementById('deck-select').addEventListener('change', e => {
+            document.getElementById('deck-select').addEventListener('change', async e => {
                 lsSet(LS_LAST_DECK, e.target.value);
-                loadFields(e.target.value);
+                await loadFields(e.target.value);
             });
             document.getElementById('start-btn').addEventListener('click', startPracticing);
 
