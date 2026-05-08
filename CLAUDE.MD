@@ -27,3 +27,7 @@ This is a FastAPI web application intended to integrate with Anki via the Anki C
 Anki Connect documentation: https://git.sr.ht/~foosoft/anki-connect
 
 Anki Connect runs as a local HTTP server (default port 8765) inside the Anki desktop app. All Anki operations (deck management, card creation, querying) go through POST requests to `http://localhost:8765` with a JSON body of `{"action": "...", "version": 6, "params": {...}}`.
+
+## Development constraints
+- Never switch git branches
+- Never create separate git worktrees
