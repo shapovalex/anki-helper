@@ -238,9 +238,36 @@
         let selectedLang    = 'fr-FR';
         let mediaRecorder   = null;
         let audioChunks     = [];
+        let audioContext    = null;
+        let micLevelRafId   = null;
 
         function scoreClass(n) {
             return n >= 80 ? 'score-green' : n >= 50 ? 'score-yellow' : 'score-red';
+        }
+
+        function startMicLevelLoop(stream) {
+            audioContext = new AudioContext();
+            const source   = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            const fill = document.getElementById('mic-bar-fill');
+
+            function tick() {
+                analyser.getByteFrequencyData(data);
+                const avg = data.reduce((s, v) => s + v, 0) / data.length;
+                fill.style.width = Math.min(100, (avg / 128) * 100) + '%';
+                micLevelRafId = requestAnimationFrame(tick);
+            }
+            micLevelRafId = requestAnimationFrame(tick);
+        }
+
+        function stopMicLevelLoop() {
+            if (micLevelRafId) { cancelAnimationFrame(micLevelRafId); micLevelRafId = null; }
+            if (audioContext)  { audioContext.close(); audioContext = null; }
+            const fill = document.getElementById('mic-bar-fill');
+            if (fill) fill.style.width = '0%';
         }
 
         // ── Init ──────────────────────────────────────────────────
@@ -385,6 +412,7 @@
                 document.getElementById('record-status').textContent = 'Microphone access denied.';
                 return;
             }
+            startMicLevelLoop(stream);
             mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
             mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
             mediaRecorder.start();
@@ -397,6 +425,7 @@
             if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
             mediaRecorder.stop();
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            stopMicLevelLoop();
             const btn = document.getElementById('record-btn');
             btn.classList.remove('recording');
             btn.textContent = '🎤 Hold to Record';
