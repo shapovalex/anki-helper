@@ -306,6 +306,7 @@
             selectedField = document.getElementById('text-field-select').value;
             selectedAudio = document.getElementById('audio-field-select').value;
             selectedLang  = document.getElementById('language-select').value;
+            saveDeckSettings(selectedDeck, selectedField, selectedAudio, selectedLang);
             hide('setup-phase');
             show('card-phase');
             await loadCard();
