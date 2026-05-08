@@ -33,6 +33,7 @@ app.include_router(word_lookup_router.router)
 async def index() -> FileResponse:
     return FileResponse("static/index.html")
 
+
 @app.get("/word-lookup")
 async def word_lookup() -> FileResponse:
     return FileResponse("static/word-lookup.html")
@@ -41,3 +42,8 @@ async def word_lookup() -> FileResponse:
 @app.get("/settings")
 async def settings() -> FileResponse:
     return FileResponse("static/settings.html")
+
+
+@app.get("/help")
+async def help_page() -> FileResponse:
+    return FileResponse("static/help.html")
