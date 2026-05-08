@@ -49,3 +49,8 @@ async def settings() -> FileResponse:
 @app.get("/help")
 async def help_page() -> FileResponse:
     return FileResponse("static/help.html")
+
+
+@app.get("/pronunciation")
+async def pronunciation() -> FileResponse:
+    return FileResponse("static/pronunciation.html")

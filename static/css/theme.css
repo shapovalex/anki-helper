@@ -384,3 +384,10 @@ button:disabled, .btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-eve
 }
 
 .add-row > select { flex: 1; }
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+  font-weight: 600;
+}
+.btn-danger:hover:not(:disabled) { background: #bf5550; }
