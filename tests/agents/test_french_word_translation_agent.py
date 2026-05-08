@@ -1,5 +1,4 @@
 import os
-import base64
 import pytest
 import httpx
 from app.agents.french_word_translation_agent import FrenchWordTranslationAgent
