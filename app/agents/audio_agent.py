@@ -1,0 +1,31 @@
+import base64
+import httpx
+
+_SSML_TEMPLATE = (
+    '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="fr-FR">'
+    '<voice name="{voice}">{text}</voice>'
+    "</speak>"
+)
+
+
+class AudioAgent:
+    def __init__(self, client: httpx.AsyncClient, api_key: str, region: str) -> None:
+        self._client = client
+        self._api_key = api_key
+        self._region = region
+
+    async def synthesize(self, text: str, voice: str) -> str:
+        url = f"https://{self._region}.tts.speech.microsoft.com/cognitiveservices/v1"
+        ssml = _SSML_TEMPLATE.format(voice=voice, text=text)
+        response = await self._client.post(
+            url,
+            headers={
+                "Ocp-Apim-Subscription-Key": self._api_key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "audio-16khz-128kbitrate-mono-mp3",
+            },
+            content=ssml.encode(),
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        return base64.b64encode(response.content).decode()
