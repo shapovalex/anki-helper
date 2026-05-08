@@ -245,6 +245,7 @@
         let audioContext    = null;
         let micLevelRafId   = null;
         let lastRecordingBlob = null;
+        let recordingRequested = false;
 
         function scoreClass(n) {
             return n >= 80 ? 'score-green' : n >= 50 ? 'score-yellow' : 'score-red';
@@ -321,6 +322,7 @@
             btn.addEventListener('mouseleave', stopRecording);
             btn.addEventListener('touchstart', e => { e.preventDefault(); startRecording(); }, { passive: false });
             btn.addEventListener('touchend',   stopRecording);
+            btn.addEventListener('touchcancel', stopRecording);
         }
 
         function show(id) { document.getElementById(id).style.display = 'block'; }
@@ -410,6 +412,7 @@
 
         // ── Recording ─────────────────────────────────────────────
         async function startRecording() {
+            recordingRequested = true;
             if (mediaRecorder && mediaRecorder.state === 'recording') return;
             lastRecordingBlob = null;
             audioChunks = [];
@@ -418,6 +421,10 @@
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch {
                 document.getElementById('record-status').textContent = 'Microphone access denied.';
+                return;
+            }
+            if (!recordingRequested) {
+                stream.getTracks().forEach(t => t.stop());
                 return;
             }
             startMicLevelLoop(stream);
@@ -430,6 +437,7 @@
         }
 
         async function stopRecording() {
+            recordingRequested = false;
             if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
             mediaRecorder.stop();
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
@@ -595,7 +603,13 @@
             document.getElementById('record-btn').textContent = '🎤 Hold to Record';
             currentAssessment = null;
             const replayAudio = document.getElementById('replay-audio');
-            if (replayAudio) { replayAudio.pause(); replayAudio.src = ''; }
+            if (replayAudio) {
+                replayAudio.pause();
+                if (replayAudio.src && replayAudio.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(replayAudio.src);
+                }
+                replayAudio.src = '';
+            }
             const replayBtn = document.getElementById('replay-btn');
             if (replayBtn) replayBtn.style.display = 'none';
         }
