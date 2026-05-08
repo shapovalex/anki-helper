@@ -14,8 +14,8 @@ from app.routers import word_lookup as word_lookup_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.config = ConfigManager()
     async with httpx.AsyncClient(timeout=10.0) as http_client:
+        app.state.config = ConfigManager()
         app.state.http_client = http_client
         app.state.anki_client = AnkiClient(http_client)
         yield
@@ -37,3 +37,13 @@ async def index() -> FileResponse:
 @app.get("/decks")
 async def decks() -> FileResponse:
     return FileResponse("static/decks.html")
+
+
+@app.get("/word-lookup")
+async def word_lookup() -> FileResponse:
+    return FileResponse("static/word-lookup.html")
+
+
+@app.get("/settings")
+async def settings() -> FileResponse:
+    return FileResponse("static/settings.html")
