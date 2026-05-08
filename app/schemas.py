@@ -65,3 +65,63 @@ class SettingsUpdateRequest(BaseModel):
     openrouter_api_key: str | None = Field(default=None, min_length=1)
     azure_api_key: str | None = Field(default=None, min_length=1)
     note_type: str | None = Field(default=None, min_length=1)
+
+
+class PronunciationFieldsResponse(BaseModel):
+    fields: list[str]
+
+
+class PronunciationCardResponse(BaseModel):
+    card_id: int
+    text: str
+    audio_base64: str | None
+
+
+class PronunciationAssessRequest(BaseModel):
+    audio_base64: str
+    reference_text: str
+    language: str
+
+
+class PhonemeResult(BaseModel):
+    symbol: str
+    accuracy: float
+
+
+class WordResult(BaseModel):
+    word: str
+    accuracy: float
+    error_type: str
+    phonemes: list[PhonemeResult]
+
+
+class OverallScore(BaseModel):
+    accuracy: float
+    fluency: float
+    completeness: float
+    pron_score: float
+
+
+class PronunciationAssessResponse(BaseModel):
+    overall: OverallScore
+    recognized_text: str
+    words: list[WordResult]
+
+
+class PronunciationRecommendRequest(BaseModel):
+    reference_text: str
+    language: str
+    words: list[WordResult]
+
+
+class PronunciationRecommendResponse(BaseModel):
+    tips: list[str]
+
+
+class PronunciationAnswerRequest(BaseModel):
+    card_id: int
+    ease: int = Field(ge=1, le=4)
+
+
+class PronunciationAnswerResponse(BaseModel):
+    ok: bool
