@@ -27,10 +27,13 @@ async def test_generate_returns_translation_result(agent):
     result = await agent.generate(word="bonjour", cefr_level="B1")
 
     assert isinstance(result, TranslationResult)
-    assert result.russian_word  # non-empty string
-    assert result.example       # non-empty French sentence
+    assert result.russian_word
+    assert result.example
     assert result.word_evaluation
-    assert result.is_valid is True  # "bonjour" is valid
+    assert result.is_valid is True
+    assert isinstance(result.alternative_examples, list)
+    assert len(result.alternative_examples) == 5
+    assert all(isinstance(s, str) and s for s in result.alternative_examples)
 
 
 async def test_generate_flags_misspelled_word(agent):

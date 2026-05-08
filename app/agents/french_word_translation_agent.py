@@ -10,6 +10,8 @@ _SYSTEM_PROMPT = (
     "respond ONLY with a JSON object (no markdown) with exactly these keys:\n"
     "- russian_word: Russian translation of the word\n"
     "- example: a natural French sentence using the word, appropriate for the CEFR level\n"
+    "- alternative_examples: a JSON array of exactly 5 additional natural French sentences "
+    "using the word, each appropriate for the CEFR level and distinct from 'example'\n"
     "- word_evaluation: brief note on whether the word is correctly spelled and valid French\n"
     "- is_valid: true if the word is a real, correctly spelled French word, false otherwise"
 )
