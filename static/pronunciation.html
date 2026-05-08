@@ -206,6 +206,7 @@
             const tSel = document.getElementById('text-field-select');
             const aSel = document.getElementById('audio-field-select');
             const lSel = document.getElementById('language-select');
+            if (!tSel || !aSel || !lSel) return;
             if (saved.textField  && [...tSel.options].some(o => o.value === saved.textField))
                 tSel.value = saved.textField;
             if (saved.audioField && [...aSel.options].some(o => o.value === saved.audioField))
