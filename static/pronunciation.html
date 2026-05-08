@@ -184,6 +184,36 @@
     <script>
         const DEFAULT_VOICES = { 'fr-FR': 'fr-FR-DeniseNeural', 'en-US': 'en-US-JennyNeural' };
 
+        const LS_LAST_DECK = 'pronunciation:lastDeck';
+        function lsDeckKey(deck) { return `pronunciation:deck:${deck}`; }
+
+        function lsGet(key) {
+            try { return localStorage.getItem(key); } catch { return null; }
+        }
+        function lsSet(key, value) {
+            try { localStorage.setItem(key, value); } catch { /* storage unavailable */ }
+        }
+
+        function saveDeckSettings(deck, textField, audioField, language) {
+            lsSet(lsDeckKey(deck), JSON.stringify({ textField, audioField, language }));
+        }
+
+        function restoreDeckSettings(deck) {
+            const raw = lsGet(lsDeckKey(deck));
+            if (!raw) return;
+            let saved;
+            try { saved = JSON.parse(raw); } catch { return; }
+            const tSel = document.getElementById('text-field-select');
+            const aSel = document.getElementById('audio-field-select');
+            const lSel = document.getElementById('language-select');
+            if (saved.textField  && [...tSel.options].some(o => o.value === saved.textField))
+                tSel.value = saved.textField;
+            if (saved.audioField && [...aSel.options].some(o => o.value === saved.audioField))
+                aSel.value = saved.audioField;
+            if (saved.language   && [...lSel.options].some(o => o.value === saved.language))
+                lSel.value = saved.language;
+        }
+
         let currentCardId   = null;
         let currentAssessment = null;
         let selectedDeck    = '';
