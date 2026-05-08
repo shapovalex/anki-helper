@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronunciation Practice — Anki Helper</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <style>
+        .pronounce-text {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--text);
+            margin: 1.5rem 0;
+            line-height: 1.2;
+        }
+        .score-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .score-green  { background: rgba(74, 140, 98, 0.15); border: 1px solid rgba(74, 140, 98, 0.35); color: var(--success-text); }
+        .score-yellow { background: rgba(184, 140, 48, 0.15); border: 1px solid rgba(184, 140, 48, 0.35); color: var(--warn-text); }
+        .score-red    { background: rgba(168, 74, 68, 0.15); border: 1px solid rgba(168, 74, 68, 0.35); color: var(--error-text); }
+        .sub-scores {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .word-chip {
+            display: inline-block;
+            padding: 0.3rem 0.7rem;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-bottom: 0.4rem;
+            transition: opacity 0.12s;
+        }
+        .word-chip:hover { opacity: 0.8; }
+        .phoneme-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            padding: 0.4rem 0 0.5rem 0.5rem;
+        }
+        .phoneme-chip {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+            border: 1px solid transparent;
+        }
+        .rating-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .rating-row button { flex: 1; }
+        #record-btn {
+            position: relative;
+            user-select: none;
+        }
+        #record-btn.recording {
+            background: var(--error);
+            color: white;
+        }
+        .record-status {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-height: 1.4rem;
+            margin: 0.4rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main class="page page-sm">
+
+        <!-- ── Phase 1: Setup ───────────────────────────────────── -->
+        <div id="setup-phase">
+            <div class="page-header">
+                <h1 class="page-title">Pronunciation</h1>
+                <p class="page-subtitle">Practice speaking Anki cards aloud with Azure Speech feedback.</p>
+            </div>
+
+            <div id="anki-banner" class="banner banner-error">
+                Cannot reach Anki. Make sure Anki is running with Anki-Connect enabled.
+            </div>
+            <div id="azure-banner" class="banner banner-error">
+                Azure key not configured. <a href="/settings">Go to Settings →</a>
+            </div>
+
+            <div class="field">
+                <label>Deck</label>
+                <select id="deck-select"></select>
+            </div>
+            <div class="field">
+                <label>Text Field</label>
+                <select id="text-field-select" disabled></select>
+            </div>
+            <div class="field">
+                <label>Audio Field</label>
+                <select id="audio-field-select" disabled></select>
+            </div>
+            <div class="field">
+                <label>Language</label>
+                <select id="language-select">
+                    <option value="fr-FR">French</option>
+                    <option value="en-US">English</option>
+                </select>
+            </div>
+            <button id="start-btn" class="btn-primary btn-full" disabled>Start Practicing</button>
+        </div>
+
+        <!-- ── Phase 2: Card practice ───────────────────────────── -->
+        <div id="card-phase" style="display:none;">
+
+            <div id="no-cards-msg" style="display:none; text-align:center; padding: 3rem 0;">
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">No due cards in this deck.</p>
+                <button class="btn-secondary" onclick="showSetup()">← Back to Setup</button>
+            </div>
+
+            <div id="card-content">
+                <div class="pronounce-text" id="pronounce-text"></div>
+
+                <div class="field">
+                    <label>Reference Audio</label>
+                    <audio id="ref-audio" controls style="width:100%; color-scheme:dark;"></audio>
+                </div>
+
+                <button id="record-btn" class="btn-primary btn-full">🎤 Hold to Record</button>
+                <p class="record-status" id="record-status"></p>
+
+                <!-- Results -->
+                <div id="results-section" style="display:none;">
+
+                    <div id="overall-badge" class="eval-badge eval-warning" style="margin-bottom:0.5rem;"></div>
+                    <div class="sub-scores" id="sub-scores"></div>
+
+                    <div id="heard-row" class="field" style="display:none;">
+                        <label>Azure heard</label>
+                        <p id="heard-text" style="font-style:italic; color:var(--text-muted); font-size:0.9rem;"></p>
+                    </div>
+
+                    <div class="field">
+                        <label>Words</label>
+                        <div id="words-container"></div>
+                    </div>
+
+                    <div class="field" id="recs-section">
+                        <button id="get-recs-btn" class="btn-secondary" onclick="getRecommendations()">Get Recommendations</button>
+                        <div id="recs-error" class="inline-error"></div>
+                        <div id="recs-content" style="display:none; margin-top:0.75rem;"></div>
+                    </div>
+
+                    <button class="btn-secondary btn-full" style="margin-bottom:1rem;" onclick="resetForRecording()">🎤 Record Again</button>
+
+                    <div class="divider"></div>
+
+                    <div class="rating-row">
+                        <button class="btn-danger"   onclick="answerCard(1)">Again</button>
+                        <button class="btn-secondary" onclick="answerCard(2)">Hard</button>
+                        <button class="btn-primary"  onclick="answerCard(3)">Good</button>
+                        <button class="btn-success"  onclick="answerCard(4)">Easy</button>
+                    </div>
+                    <div style="text-align:center;">
+                        <a href="#" onclick="skip(); return false;" style="font-size:0.82rem; color:var(--text-muted);">Skip (no rating)</a>
+                    </div>
+
+                </div><!-- /results-section -->
+            </div><!-- /card-content -->
+        </div><!-- /card-phase -->
+
+    </main>
+
+    <script src="/static/js/menu.js"></script>
+    <script>
+        const DEFAULT_VOICES = { 'fr-FR': 'fr-FR-DeniseNeural', 'en-US': 'en-US-JennyNeural' };
+
+        let currentCardId   = null;
+        let currentAssessment = null;
+        let selectedDeck    = '';
+        let selectedField   = '';
+        let selectedAudio   = '';
+        let selectedLang    = 'fr-FR';
+        let mediaRecorder   = null;
+        let audioChunks     = [];
+
+        function scoreClass(n) {
+            return n >= 80 ? 'score-green' : n >= 50 ? 'score-yellow' : 'score-red';
+        }
+
+        // ── Init ──────────────────────────────────────────────────
+        async function init() {
+            const sRes = await fetch('/api/settings').catch(() => null);
+            if (sRes && sRes.ok) {
+                const s = await sRes.json();
+                if (!s.azure_key_set) show('azure-banner');
+            }
+
+            try {
+                const res = await fetch('/api/decks');
+                if (!res.ok) throw new Error();
+                const { decks } = await res.json();
+                const sel = document.getElementById('deck-select');
+                decks.forEach(d => {
+                    const o = document.createElement('option');
+                    o.value = o.textContent = d;
+                    sel.appendChild(o);
+                });
+                if (decks.length) {
+                    await loadFields(decks[0]);
+                    document.getElementById('start-btn').disabled = false;
+                }
+            } catch {
+                show('anki-banner');
+            }
+
+            document.getElementById('deck-select').addEventListener('change', e => loadFields(e.target.value));
+            document.getElementById('start-btn').addEventListener('click', startPracticing);
+
+            const btn = document.getElementById('record-btn');
+            btn.addEventListener('mousedown',  startRecording);
+            btn.addEventListener('mouseup',    stopRecording);
+            btn.addEventListener('mouseleave', stopRecording);
+            btn.addEventListener('touchstart', e => { e.preventDefault(); startRecording(); }, { passive: false });
+            btn.addEventListener('touchend',   stopRecording);
+        }
+
+        function show(id) { document.getElementById(id).style.display = 'block'; }
+        function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ── Field loading ─────────────────────────────────────────
+        async function loadFields(deck) {
+            const tSel = document.getElementById('text-field-select');
+            const aSel = document.getElementById('audio-field-select');
+            tSel.innerHTML = '';
+            aSel.innerHTML = '';
+            tSel.disabled = aSel.disabled = true;
+            try {
+                const res = await fetch(`/api/pronunciation/fields?deck=${encodeURIComponent(deck)}`);
+                if (!res.ok) return;
+                const { fields } = await res.json();
+                fields.forEach(f => {
+                    [tSel, aSel].forEach(sel => {
+                        const o = document.createElement('option');
+                        o.value = o.textContent = f;
+                        sel.appendChild(o);
+                    });
+                });
+                tSel.disabled = aSel.disabled = false;
+            } catch { /* leave disabled */ }
+        }
+
+        // ── Session start ─────────────────────────────────────────
+        async function startPracticing() {
+            selectedDeck  = document.getElementById('deck-select').value;
+            selectedField = document.getElementById('text-field-select').value;
+            selectedAudio = document.getElementById('audio-field-select').value;
+            selectedLang  = document.getElementById('language-select').value;
+            hide('setup-phase');
+            show('card-phase');
+            await loadCard();
+        }
+
+        function showSetup() {
+            hide('card-phase');
+            show('setup-phase');
+        }
+
+        // ── Card loading ──────────────────────────────────────────
+        async function loadCard() {
+            resetForRecording();
+            hide('results-section');
+            hide('no-cards-msg');
+            show('card-content');
+
+            const url = `/api/pronunciation/card`
+                + `?deck=${encodeURIComponent(selectedDeck)}`
+                + `&field=${encodeURIComponent(selectedField)}`
+                + `&audio_field=${encodeURIComponent(selectedAudio)}`;
+
+            const res = await fetch(url).catch(() => null);
+            if (!res || res.status === 404) {
+                hide('card-content');
+                show('no-cards-msg');
+                return;
+            }
+            if (!res.ok) return;
+
+            const data = await res.json();
+            currentCardId = data.card_id;
+            document.getElementById('pronounce-text').textContent = data.text;
+
+            const audioEl = document.getElementById('ref-audio');
+            audioEl.src = '';
+            if (data.audio_base64) {
+                audioEl.src = 'data:audio/mpeg;base64,' + data.audio_base64;
+            } else {
+                const voice = DEFAULT_VOICES[selectedLang] || DEFAULT_VOICES['fr-FR'];
+                const tRes = await fetch('/api/word-lookup/audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: data.text, voice }),
+                }).catch(() => null);
+                if (tRes && tRes.ok) {
+                    const { audio_base64 } = await tRes.json();
+                    audioEl.src = 'data:audio/mpeg;base64,' + audio_base64;
+                }
+            }
+        }
+
+        // ── Recording ─────────────────────────────────────────────
+        async function startRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') return;
+            audioChunks = [];
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch {
+                document.getElementById('record-status').textContent = 'Microphone access denied.';
+                return;
+            }
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.start();
+            document.getElementById('record-btn').classList.add('recording');
+            document.getElementById('record-btn').textContent = '● Recording…';
+            document.getElementById('record-status').textContent = '';
+        }
+
+        async function stopRecording() {
+            if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            const btn = document.getElementById('record-btn');
+            btn.classList.remove('recording');
+            btn.textContent = '🎤 Hold to Record';
+            document.getElementById('record-status').textContent = 'Evaluating…';
+
+            await new Promise(resolve => { mediaRecorder.onstop = resolve; });
+
+            const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+            const audioBase64 = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(blob);
+            });
+
+            await submitAudio(audioBase64);
+        }
+
+        async function submitAudio(audioBase64) {
+            try {
+                const res = await fetch('/api/pronunciation/assess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        audio_base64: audioBase64,
+                        reference_text: document.getElementById('pronounce-text').textContent,
+                        language: selectedLang,
+                    }),
+                });
+                if (!res.ok) {
+                    const { detail } = await res.json().catch(() => ({}));
+                    document.getElementById('record-status').textContent = detail ?? `Error ${res.status}`;
+                    return;
+                }
+                currentAssessment = await res.json();
+                showResults(currentAssessment);
+            } catch {
+                document.getElementById('record-status').textContent = 'Network error.';
+            }
+        }
+
+        // ── Results rendering ─────────────────────────────────────
+        function showResults(data) {
+            document.getElementById('record-status').textContent = '';
+            show('results-section');
+
+            const score = Math.round(data.overall.pron_score);
+            const badge = document.getElementById('overall-badge');
+            badge.textContent = `PronScore: ${score}/100`;
+            badge.className = `eval-badge ${score >= 80 ? 'eval-valid' : 'eval-warning'}`;
+
+            const sub = document.getElementById('sub-scores');
+            sub.innerHTML = ['accuracy', 'fluency', 'completeness'].map(k => {
+                const v = Math.round(data.overall[k]);
+                return `<span class="score-badge ${scoreClass(v)}">${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}</span>`;
+            }).join('');
+
+            const refText = document.getElementById('pronounce-text').textContent.toLowerCase().trim();
+            const heardText = (data.recognized_text || '').toLowerCase().trim();
+            if (heardText && heardText !== refText) {
+                document.getElementById('heard-text').textContent = data.recognized_text;
+                show('heard-row');
+            } else {
+                hide('heard-row');
+            }
+
+            // Find worst-scoring word index
+            let worstIdx = 0;
+            data.words.forEach((w, i) => { if (w.accuracy < data.words[worstIdx].accuracy) worstIdx = i; });
+
+            const container = document.getElementById('words-container');
+            container.innerHTML = '';
+            data.words.forEach((word, idx) => {
+                const wordWrap = document.createElement('div');
+                wordWrap.style.marginBottom = '0.5rem';
+
+                const chip = document.createElement('div');
+                const sc = scoreClass(word.accuracy);
+                chip.className = `word-chip ${sc}`;
+                const errorLabel = word.error_type !== 'None' ? ` · ${word.error_type}` : '';
+                chip.textContent = `${word.word} ${Math.round(word.accuracy)}${errorLabel}`;
+
+                const phonemeRow = document.createElement('div');
+                phonemeRow.className = 'phoneme-row';
+                phonemeRow.style.display = idx === worstIdx ? 'flex' : 'none';
+
+                word.phonemes.forEach(p => {
+                    const pc = document.createElement('span');
+                    const psc = scoreClass(p.accuracy);
+                    pc.className = `phoneme-chip ${psc}`;
+                    pc.textContent = `${p.symbol} ${Math.round(p.accuracy)}`;
+                    phonemeRow.appendChild(pc);
+                });
+
+                chip.addEventListener('click', () => {
+                    phonemeRow.style.display = phonemeRow.style.display === 'none' ? 'flex' : 'none';
+                });
+
+                wordWrap.appendChild(chip);
+                wordWrap.appendChild(phonemeRow);
+                container.appendChild(wordWrap);
+            });
+
+            // Reset recommendations
+            const recsBtn = document.getElementById('get-recs-btn');
+            recsBtn.disabled = false;
+            recsBtn.style.display = '';
+            recsBtn.textContent = 'Get Recommendations';
+            hide('recs-content');
+            document.getElementById('recs-content').innerHTML = '';
+            document.getElementById('recs-error').textContent = '';
+        }
+
+        // ── Recommendations ───────────────────────────────────────
+        async function getRecommendations() {
+            const btn = document.getElementById('get-recs-btn');
+            btn.disabled = true;
+            btn.textContent = 'Loading…';
+            document.getElementById('recs-error').textContent = '';
+
+            try {
+                const res = await fetch('/api/pronunciation/recommendations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reference_text: document.getElementById('pronounce-text').textContent,
+                        language: selectedLang,
+                        words: currentAssessment.words,
+                    }),
+                });
+                if (!res.ok) {
+                    const { detail } = await res.json().catch(() => ({}));
+                    document.getElementById('recs-error').textContent = detail ?? 'Failed.';
+                    btn.disabled = false;
+                    btn.textContent = 'Retry';
+                    return;
+                }
+                const { tips } = await res.json();
+                const content = document.getElementById('recs-content');
+                content.innerHTML = tips.map(t => `<p style="margin-bottom:0.4rem;">• ${t}</p>`).join('');
+                show('recs-content');
+                btn.style.display = 'none';
+            } catch {
+                document.getElementById('recs-error').textContent = 'Network error.';
+                btn.disabled = false;
+                btn.textContent = 'Retry';
+            }
+        }
+
+        // ── Card flow ─────────────────────────────────────────────
+        function resetForRecording() {
+            hide('results-section');
+            document.getElementById('record-status').textContent = '';
+            document.getElementById('record-btn').classList.remove('recording');
+            document.getElementById('record-btn').textContent = '🎤 Hold to Record';
+            currentAssessment = null;
+        }
+
+        async function answerCard(ease) {
+            if (!currentCardId) return;
+            await fetch('/api/pronunciation/answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ card_id: currentCardId, ease }),
+            }).catch(() => {});
+            await loadCard();
+        }
+
+        async function skip() {
+            await loadCard();
+        }
+
+        init();
+    </script>
+</body>
+</html>
