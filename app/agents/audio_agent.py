@@ -1,11 +1,20 @@
 import base64
+from xml.sax.saxutils import escape
+
 import httpx
 
 _SSML_TEMPLATE = (
-    '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="fr-FR">'
+    '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="{lang}">'
     '<voice name="{voice}">{text}</voice>'
     "</speak>"
 )
+
+
+def _lang_from_voice(voice: str) -> str:
+    parts = voice.split("-")
+    if len(parts) >= 2:
+        return f"{parts[0]}-{parts[1]}"
+    return "fr-FR"  # safe fallback
 
 
 class AudioAgent:
@@ -16,7 +25,8 @@ class AudioAgent:
 
     async def synthesize(self, text: str, voice: str) -> str:
         url = f"https://{self._region}.tts.speech.microsoft.com/cognitiveservices/v1"
-        ssml = _SSML_TEMPLATE.format(voice=voice, text=text)
+        lang = _lang_from_voice(voice)
+        ssml = _SSML_TEMPLATE.format(lang=lang, voice=escape(voice), text=escape(text))
         response = await self._client.post(
             url,
             headers={
@@ -27,5 +37,10 @@ class AudioAgent:
             content=ssml.encode(),
             timeout=30.0,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise ValueError(
+                f"Azure TTS request failed ({exc.response.status_code}): {exc.response.text[:200]}"
+            ) from exc
         return base64.b64encode(response.content).decode()
