@@ -18,6 +18,13 @@ def mock_translation_agent():
         example="Bonjour, comment allez-vous?",
         word_evaluation="Valid French interjection used as a greeting.",
         is_valid=True,
+        alternative_examples=[
+            "Bonjour, je m'appelle Marie.",
+            "Dis bonjour à ta mère de ma part.",
+            "Il faut dire bonjour quand on entre.",
+            "Elle lui a dit bonjour en souriant.",
+            "Bonjour tout le monde, bienvenue!",
+        ],
     ))
     return agent
 
@@ -63,6 +70,7 @@ def test_generate_delegates_to_agent(client, mock_translation_agent):
     data = response.json()
     assert data["russian_word"] == "привет"
     assert data["is_valid"] is True
+    assert len(data["alternative_examples"]) == 5
     mock_translation_agent.generate.assert_called_once_with(word="bonjour", cefr_level="B1")
 
 

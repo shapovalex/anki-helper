@@ -10,6 +10,7 @@ class TranslationResult(BaseModel):
     example: str
     word_evaluation: str
     is_valid: bool
+    alternative_examples: list[str]
 
 
 class GenerateRequest(BaseModel):
