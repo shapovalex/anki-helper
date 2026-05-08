@@ -102,7 +102,61 @@ def test_add_to_anki_uses_slugified_filenames(client, mock_anki):
         "french_word_audio_base64": "bW9jaw==",
         "example_audio_base64": "bW9jaw==",
     })
-    calls = [str(c) for c in mock_anki.invoke.call_args_list]
-    # Slugified "être" → "tre" (accent stripped); filenames must be ASCII
-    assert any("tre.mp3" in c for c in calls)
-    assert any("tre_example.mp3" in c for c in calls)
+    # Extract filename kwargs from storeMediaFile calls
+    store_calls = [
+        c for c in mock_anki.invoke.call_args_list
+        if c.args and c.args[0] == "storeMediaFile"
+    ]
+    filenames = [c.kwargs.get("filename") for c in store_calls]
+    assert "etre.mp3" in filenames
+    assert "etre_example.mp3" in filenames
+
+
+import httpx
+from app.anki_client import AnkiConnectError
+
+
+def test_generate_returns_503_when_key_not_configured():
+    """Verifies the real get_translation_agent raises 503 when config has no key."""
+    from unittest.mock import MagicMock
+
+    mock_config = MagicMock()
+    mock_config.openrouter_key_set = False
+
+    # Don't override get_translation_agent — let it run with no-key config
+    with TestClient(app) as c:
+        original_config = c.app.state.config
+        c.app.state.config = mock_config
+        try:
+            response = c.post("/api/word-lookup/generate", json={"word": "bonjour", "cefr_level": "B1"})
+        finally:
+            c.app.state.config = original_config
+    assert response.status_code == 503
+
+
+def test_add_to_anki_returns_400_for_missing_note_type(client, mock_anki):
+    mock_anki.invoke.side_effect = AnkiConnectError("deck or model not found")
+    response = client.post("/api/word-lookup/add-to-anki", json={
+        "deck": "French",
+        "note_type": "Wrong-Type",
+        "french_word": "bonjour",
+        "russian_word": "привет",
+        "example": "Bonjour!",
+        "french_word_audio_base64": "bW9jaw==",
+        "example_audio_base64": "bW9jaw==",
+    })
+    assert response.status_code == 400
+
+
+def test_add_to_anki_returns_503_when_anki_not_running(client, mock_anki):
+    mock_anki.invoke.side_effect = httpx.ConnectError("Connection refused")
+    response = client.post("/api/word-lookup/add-to-anki", json={
+        "deck": "French",
+        "note_type": "French-Russian",
+        "french_word": "bonjour",
+        "russian_word": "привет",
+        "example": "Bonjour!",
+        "french_word_audio_base64": "bW9jaw==",
+        "example_audio_base64": "bW9jaw==",
+    })
+    assert response.status_code == 503

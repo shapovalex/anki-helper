@@ -39,7 +39,7 @@ class VoicesResponse(BaseModel):
 class AddToAnkiRequest(BaseModel):
     deck: str
     note_type: str
-    french_word: str
+    french_word: str = Field(min_length=1, max_length=100)
     russian_word: str
     example: str
     french_word_audio_base64: str

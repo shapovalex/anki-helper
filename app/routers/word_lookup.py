@@ -1,3 +1,4 @@
+import logging
 import re
 import unicodedata
 import httpx
@@ -5,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.agents.audio_agent import AudioAgent
 from app.agents.french_word_translation_agent import FrenchWordTranslationAgent
-from app.anki_client import AnkiConnectError
+from app.anki_client import AnkiClient, AnkiConnectError
 from app.config import ConfigManager
 from app.schemas import (
     AddToAnkiRequest,
@@ -17,6 +18,8 @@ from app.schemas import (
     Voice,
     VoicesResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/word-lookup", tags=["word-lookup"])
 
@@ -64,7 +67,7 @@ def get_audio_agent(request: Request) -> AudioAgent:
     )
 
 
-def get_anki_client(request: Request):
+def get_anki_client(request: Request) -> AnkiClient:
     return request.app.state.anki_client
 
 
@@ -83,6 +86,7 @@ async def generate(
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail=f"OpenRouter error: {e.response.status_code}")
     except Exception as e:
+        logger.exception("Unexpected error in generate endpoint")
         raise HTTPException(status_code=502, detail=str(e))
 
 
@@ -98,6 +102,7 @@ async def generate_audio(
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail=f"Azure TTS error: {e.response.status_code}")
     except Exception as e:
+        logger.exception("Unexpected error in generate_audio endpoint")
         raise HTTPException(status_code=502, detail=str(e))
 
 
