@@ -43,6 +43,9 @@ class ConfigManager:
         return result
 
     def save(self, updates: dict[str, str]) -> None:
+        unknown = set(updates) - _MANAGED_KEYS
+        if unknown:
+            raise ValueError(f"Unknown config keys: {unknown}")
         current = self._read_env_file()
         current.update(updates)
         ENV_LOCAL_PATH.write_text(

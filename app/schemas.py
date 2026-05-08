@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DeckListResponse(BaseModel):
@@ -59,8 +59,8 @@ class SettingsResponse(BaseModel):
 
 
 class SettingsUpdateRequest(BaseModel):
-    model: str | None = None
-    azure_region: str | None = None
-    openrouter_api_key: str | None = None
-    azure_api_key: str | None = None
-    note_type: str | None = None
+    model: str | None = Field(default=None, min_length=1)
+    azure_region: str | None = Field(default=None, min_length=1)
+    openrouter_api_key: str | None = Field(default=None, min_length=1)
+    azure_api_key: str | None = Field(default=None, min_length=1)
+    note_type: str | None = Field(default=None, min_length=1)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.config import ConfigManager
 from app.schemas import SettingsResponse, SettingsUpdateRequest
@@ -23,7 +23,7 @@ async def get_settings(
     )
 
 
-@router.post("", response_model=dict)
+@router.post("", response_model=dict[str, bool])
 async def update_settings(
     body: SettingsUpdateRequest,
     config: ConfigManager = Depends(get_config),
@@ -40,5 +40,8 @@ async def update_settings(
     if body.note_type is not None:
         updates["NOTE_TYPE_NAME"] = body.note_type
     if updates:
-        config.save(updates)
+        try:
+            config.save(updates)
+        except OSError as exc:
+            raise HTTPException(status_code=500, detail="Failed to persist settings") from exc
     return {"ok": True}

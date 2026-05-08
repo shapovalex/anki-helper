@@ -60,3 +60,27 @@ def test_post_settings_empty_body_does_not_call_save(client, mock_config):
     response = client.post("/api/settings", json={})
     assert response.status_code == 200
     mock_config.save.assert_not_called()
+
+
+def test_post_settings_save_failure_returns_500(client, mock_config):
+    mock_config.save.side_effect = OSError("disk full")
+    response = client.post("/api/settings", json={"model": "some-model"})
+    assert response.status_code == 500
+
+
+def test_post_settings_all_fields(client, mock_config):
+    response = client.post("/api/settings", json={
+        "openrouter_api_key": "sk-or-key",
+        "model": "gpt-4o",
+        "azure_api_key": "az-key",
+        "azure_region": "eastus",
+        "note_type": "My-Note-Type",
+    })
+    assert response.status_code == 200
+    mock_config.save.assert_called_once_with({
+        "OPENROUTER_API_KEY": "sk-or-key",
+        "OPENROUTER_MODEL": "gpt-4o",
+        "AZURE_TTS_KEY": "az-key",
+        "AZURE_TTS_REGION": "eastus",
+        "NOTE_TYPE_NAME": "My-Note-Type",
+    })
