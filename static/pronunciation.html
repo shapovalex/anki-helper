@@ -77,6 +77,20 @@
             min-height: 1.4rem;
             margin: 0.4rem 0;
         }
+        .mic-bar {
+            height: 4px;
+            background: var(--surface-2, #2a2a2a);
+            border-radius: 2px;
+            margin: 0.3rem 0 0.2rem;
+            overflow: hidden;
+        }
+        .mic-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary, #5b8dee);
+            border-radius: 2px;
+            transition: width 0.05s linear;
+        }
     </style>
 </head>
 <body>
@@ -136,6 +150,7 @@
                 </div>
 
                 <button id="record-btn" class="btn-primary btn-full">🎤 Hold to Record</button>
+                <div class="mic-bar"><div class="mic-bar-fill" id="mic-bar-fill"></div></div>
                 <p class="record-status" id="record-status"></p>
 
                 <!-- Results -->
