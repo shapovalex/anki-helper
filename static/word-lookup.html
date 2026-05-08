@@ -57,6 +57,11 @@
                 <textarea id="example" rows="3"></textarea>
             </div>
 
+            <div id="alt-examples-section" class="field" style="display:none;">
+                <label>Alternative Examples</label>
+                <div id="alt-examples-list"></div>
+            </div>
+
             <div class="field">
                 <label>Word Audio</label>
                 <div class="audio-row">
@@ -152,6 +157,7 @@
             exampleAudioBase64 = null;
             document.getElementById('add-anki-btn').disabled = true;
             document.getElementById('result-section').style.display = 'none';
+            document.getElementById('alt-examples-section').style.display = 'none';
             document.getElementById('generate-error').textContent = '';
             document.getElementById('word-audio').src    = '';
             document.getElementById('example-audio').src = '';
@@ -179,6 +185,21 @@
                 const data = await res.json();
                 document.getElementById('translation').value = data.russian_word;
                 document.getElementById('example').value     = data.example;
+
+                const altList = document.getElementById('alt-examples-list');
+                altList.innerHTML = '';
+                (data.alternative_examples || []).forEach(alt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-secondary btn-full';
+                    btn.style.cssText = 'text-align:left; margin-bottom:0.5rem; white-space:normal; height:auto; padding:0.5rem 0.75rem;';
+                    btn.textContent = alt;
+                    btn.addEventListener('click', () => {
+                        document.getElementById('example').value = alt;
+                        regenAudio('example');
+                    });
+                    altList.appendChild(btn);
+                });
+                document.getElementById('alt-examples-section').style.display = 'block';
 
                 const badge = document.getElementById('eval-badge');
                 badge.textContent = (data.is_valid ? '✓ ' : '⚠ ') + data.word_evaluation;
