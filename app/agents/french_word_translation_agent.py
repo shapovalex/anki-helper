@@ -1,5 +1,6 @@
 import json
 import httpx
+from pydantic import ValidationError
 from app.schemas import TranslationResult
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -46,5 +47,5 @@ class FrenchWordTranslationAgent:
             raise ValueError(f"OpenRouter returned non-JSON content: {content!r}") from exc
         try:
             return TranslationResult(**data)
-        except Exception as exc:
+        except ValidationError as exc:
             raise ValueError(f"OpenRouter response missing required fields: {exc}") from exc
