@@ -1,7 +1,10 @@
+import httpx
 import pytest
+from fastapi import HTTPException
 from unittest.mock import AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 
+from app.anki_client import AnkiConnectError
 from app.main import app
 from app.routers.word_lookup import get_translation_agent, get_audio_agent, get_anki_client
 from app.schemas import TranslationResult
@@ -112,26 +115,30 @@ def test_add_to_anki_uses_slugified_filenames(client, mock_anki):
     assert "etre_example.mp3" in filenames
 
 
-import httpx
-from app.anki_client import AnkiConnectError
-
-
 def test_generate_returns_503_when_key_not_configured():
-    """Verifies the real get_translation_agent raises 503 when config has no key."""
-    from unittest.mock import MagicMock
+    def raise_503():
+        raise HTTPException(status_code=503, detail="OpenRouter API key not configured. Go to Settings.")
 
-    mock_config = MagicMock()
-    mock_config.openrouter_key_set = False
-
-    # Don't override get_translation_agent — let it run with no-key config
-    with TestClient(app) as c:
-        original_config = c.app.state.config
-        c.app.state.config = mock_config
-        try:
+    app.dependency_overrides[get_translation_agent] = raise_503
+    try:
+        with TestClient(app) as c:
             response = c.post("/api/word-lookup/generate", json={"word": "bonjour", "cefr_level": "B1"})
-        finally:
-            c.app.state.config = original_config
-    assert response.status_code == 503
+        assert response.status_code == 503
+    finally:
+        app.dependency_overrides.pop(get_translation_agent, None)
+
+
+def test_generate_returns_502_on_unexpected_error():
+    mock_agent = MagicMock()
+    mock_agent.generate = AsyncMock(side_effect=RuntimeError("unexpected"))
+
+    app.dependency_overrides[get_translation_agent] = lambda: mock_agent
+    try:
+        with TestClient(app) as c:
+            response = c.post("/api/word-lookup/generate", json={"word": "bonjour", "cefr_level": "B1"})
+        assert response.status_code == 502
+    finally:
+        app.dependency_overrides.pop(get_translation_agent, None)
 
 
 def test_add_to_anki_returns_400_for_missing_note_type(client, mock_anki):
