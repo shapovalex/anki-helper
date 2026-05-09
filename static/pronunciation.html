@@ -31,30 +31,80 @@
             flex-wrap: wrap;
             margin-bottom: 1rem;
         }
-        .word-chip {
-            display: inline-block;
-            padding: 0.3rem 0.7rem;
-            border-radius: var(--radius);
-            font-size: 0.9rem;
-            cursor: pointer;
-            border: 1px solid transparent;
-            margin-bottom: 0.4rem;
-            transition: opacity 0.12s;
+        .phoneme-table {
+            border: 1px solid var(--border, #2a2a2a);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
         }
-        .word-chip:hover { opacity: 0.8; }
-        .phoneme-row {
+        .phoneme-table-header {
+            background: var(--surface-2, #222);
+            padding: 0.4rem 0.9rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border, #2a2a2a);
+        }
+        .phoneme-word-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.9rem;
+            border-bottom: 1px solid var(--surface-2, #222);
+        }
+        .phoneme-word-row:last-child { border-bottom: none; }
+        .word-col {
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        .word-col-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .word-col-score {
+            font-size: 0.7rem;
+            opacity: 0.65;
+            margin-top: 0.05rem;
+        }
+        .pills {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.3rem;
-            padding: 0.4rem 0 0.5rem 0.5rem;
+            gap: 0.35rem;
         }
-        .phoneme-chip {
-            display: inline-block;
-            padding: 0.15rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-family: var(--font-mono);
-            border: 1px solid transparent;
+        .phoneme-pill {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.2rem 0.45rem 0.25rem;
+            border-radius: 5px;
+            min-width: 36px;
+            gap: 0.15rem;
+        }
+        .phoneme-pill .pill-sym {
+            font-family: var(--font-mono, monospace);
+            font-size: 0.88rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .phoneme-pill .pill-bar-wrap {
+            width: 30px;
+            height: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .phoneme-pill .pill-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+        .score-green .pill-bar-fill  { background: var(--success-text); }
+        .score-yellow .pill-bar-fill { background: var(--warn-text); }
+        .score-red .pill-bar-fill    { background: var(--error-text); }
+        .phoneme-pill .pill-num {
+            font-size: 0.62rem;
+            opacity: 0.6;
+            line-height: 1;
         }
         .rating-row {
             display: flex;
@@ -71,6 +121,10 @@
             background: var(--error);
             color: white;
         }
+        .word-colored { transition: color 0.2s; }
+        .word-colored.score-green  { color: var(--success-text); }
+        .word-colored.score-yellow { color: var(--warn-text); }
+        .word-colored.score-red    { color: var(--error-text); }
         .record-status {
             text-align: center;
             font-size: 0.85rem;
@@ -236,6 +290,7 @@
         }
 
         let currentCardId   = null;
+        let currentCardText = '';
         let currentAssessment = null;
         let selectedDeck    = '';
         let selectedField   = '';
@@ -418,6 +473,7 @@
 
             const data = await res.json();
             currentCardId = data.card_id;
+            currentCardText = data.text;
             document.getElementById('pronounce-text').textContent = data.text;
 
             const audioEl = document.getElementById('ref-audio');
@@ -579,6 +635,34 @@
             }
         }
 
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function renderColoredPhrase(referenceText, words) {
+            const lookup = new Map();
+            words.forEach(w => lookup.set(w.word.toLowerCase(), w));
+
+            const parts = [];
+            const re = /[A-Za-zÀ-ɏ]+/g;
+            let last = 0, m;
+            while ((m = re.exec(referenceText)) !== null) {
+                if (m.index > last) parts.push({ type: 'other', text: referenceText.slice(last, m.index) });
+                parts.push({ type: 'word', text: m[0] });
+                last = m.index + m[0].length;
+            }
+            if (last < referenceText.length) parts.push({ type: 'other', text: referenceText.slice(last) });
+
+            document.getElementById('pronounce-text').innerHTML = parts.map(part => {
+                if (part.type !== 'word') return escapeHtml(part.text);
+                const wordData = lookup.get(part.text.toLowerCase());
+                if (!wordData) return `<span class="word-colored score-red" style="opacity:0.55;" title="Not recognized">${escapeHtml(part.text)}</span>`;
+                const sc = scoreClass(wordData.accuracy);
+                const tip = `${Math.round(wordData.accuracy)}/100${wordData.error_type !== 'None' ? ' · ' + wordData.error_type : ''}`;
+                return `<span class="word-colored ${sc}" title="${escapeHtml(tip)}">${escapeHtml(part.text)}</span>`;
+            }).join('');
+        }
+
         // ── Results rendering ─────────────────────────────────────
         function showResults(data) {
             document.getElementById('record-status').textContent = '';
@@ -642,6 +726,8 @@
                 container.appendChild(wordWrap);
             });
 
+            renderColoredPhrase(currentCardText, data.words);
+
             // Reset recommendations
             const recsBtn = document.getElementById('get-recs-btn');
             recsBtn.disabled = false;
@@ -698,6 +784,7 @@
             document.getElementById('record-status').textContent = '';
             document.getElementById('record-btn').classList.remove('recording');
             document.getElementById('record-btn').textContent = '🎤 Hold to Record';
+            if (currentCardText) document.getElementById('pronounce-text').textContent = currentCardText;
             currentAssessment = null;
             const replayAudio = document.getElementById('replay-audio');
             if (replayAudio) {
