@@ -20,6 +20,7 @@ async def get_settings(
         openrouter_key_set=config.openrouter_key_set,
         azure_key_set=config.azure_key_set,
         note_type=config.note_type_name,
+        sentence_note_type=config.sentence_note_type_name,
     )
 
 
@@ -39,6 +40,8 @@ async def update_settings(
         updates["AZURE_TTS_REGION"] = body.azure_region
     if body.note_type is not None:
         updates["NOTE_TYPE_NAME"] = body.note_type
+    if body.sentence_note_type is not None:
+        updates["SENTENCE_NOTE_TYPE_NAME"] = body.sentence_note_type
     if updates:
         try:
             config.save(updates)
