@@ -391,3 +391,59 @@ button:disabled, .btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-eve
   font-weight: 600;
 }
 .btn-danger:hover:not(:disabled) { background: #bf5550; }
+
+/* ── Feature hub (home page) ────────────────────────────────── */
+.feature-section { margin-bottom: 1.75rem; }
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.feature-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1rem;
+  text-decoration: none;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.feature-card:hover {
+  border-color: rgba(212, 168, 67, 0.35);
+  background: var(--surface-2);
+}
+
+.feature-card-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.2rem;
+}
+
+.feature-card-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.feature-card-full { grid-column: span 2; }
+
+/* ── Warning banner (parallel to .banner-error) ─────────────── */
+.banner-warn {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--warn-text);
+}
+.banner-warn a { color: var(--accent); }
+
+/* ── Nav separator ──────────────────────────────────────────── */
+.nav-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 0.3rem;
+  flex-shrink: 0;
+}
