@@ -13,6 +13,7 @@ from app.routers import decks as decks_router
 from app.routers import pronunciation as pronunciation_router
 from app.routers import settings as settings_router
 from app.routers import word_lookup as word_lookup_router
+from app.routers import sentence_lookup as sentence_lookup_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,6 +33,7 @@ app.include_router(decks_router.router)
 app.include_router(pronunciation_router.router)
 app.include_router(settings_router.router)
 app.include_router(word_lookup_router.router)
+app.include_router(sentence_lookup_router.router)
 
 
 @app.get("/")
