@@ -14,6 +14,8 @@ from app.routers import pronunciation as pronunciation_router
 from app.routers import settings as settings_router
 from app.routers import word_lookup as word_lookup_router
 from app.routers import sentence_lookup as sentence_lookup_router
+from app.routers import english_word_lookup as english_word_lookup_router
+from app.routers import english_sentence_lookup as english_sentence_lookup_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,6 +36,8 @@ app.include_router(pronunciation_router.router)
 app.include_router(settings_router.router)
 app.include_router(word_lookup_router.router)
 app.include_router(sentence_lookup_router.router)
+app.include_router(english_word_lookup_router.router)
+app.include_router(english_sentence_lookup_router.router)
 
 
 @app.get("/")
@@ -49,6 +53,16 @@ async def word_lookup() -> FileResponse:
 @app.get("/sentence-lookup")
 async def sentence_lookup() -> FileResponse:
     return FileResponse("static/sentence-lookup.html")
+
+
+@app.get("/english-word-lookup")
+async def english_word_lookup() -> FileResponse:
+    return FileResponse("static/english-word-lookup.html")
+
+
+@app.get("/english-sentence-lookup")
+async def english_sentence_lookup() -> FileResponse:
+    return FileResponse("static/english-sentence-lookup.html")
 
 
 @app.get("/settings")
