@@ -707,7 +707,7 @@
                 wordCol.className = 'word-col';
 
                 const wordName = document.createElement('div');
-                wordName.className = `word-col-name ${scoreClass(word.accuracy)}`;
+                wordName.className = `word-col-name word-colored ${scoreClass(word.accuracy)}`;
                 wordName.textContent = word.word;
                 wordCol.appendChild(wordName);
 
