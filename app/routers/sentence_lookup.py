@@ -13,6 +13,7 @@ from app.schemas import (
     AddToAnkiResponse,
     SentenceGenerateRequest,
     SentenceTranslationResult,
+    Voice,
     VoicesResponse,
 )
 
@@ -26,6 +27,10 @@ def _slugify(text: str) -> str:
     text = re.sub(r"[^\w\s-]", "", text.lower())
     slug = re.sub(r"[-\s]+", "_", text).strip("_")
     return slug or "sentence"
+
+
+def _filter_voices(voices: list[Voice], lang_prefix: str) -> list[Voice]:
+    return [v for v in voices if v.id.startswith(lang_prefix)]
 
 
 def get_translation_agent(request: Request) -> FrenchSentenceTranslationAgent:
@@ -66,7 +71,7 @@ async def list_voices(
 ) -> VoicesResponse:
     try:
         voices = await agent.list_voices()
-        return VoicesResponse(voices=voices)
+        return VoicesResponse(voices=_filter_voices(voices, "fr-"))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail=f"Azure TTS error: {e.response.status_code}")
     except httpx.ConnectError:
