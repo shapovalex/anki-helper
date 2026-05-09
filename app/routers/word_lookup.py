@@ -15,7 +15,6 @@ from app.schemas import (
     AudioResponse,
     GenerateRequest,
     TranslationResult,
-    Voice,
     VoicesResponse,
 )
 
@@ -72,6 +71,10 @@ async def list_voices(
         return VoicesResponse(voices=voices)
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail=f"Azure TTS error: {e.response.status_code}")
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="Cannot reach Azure TTS.")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Azure TTS timed out.")
 
 
 @router.post("/generate", response_model=TranslationResult)
