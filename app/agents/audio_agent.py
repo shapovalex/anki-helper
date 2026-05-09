@@ -3,6 +3,8 @@ from xml.sax.saxutils import escape
 
 import httpx
 
+from app.schemas import Voice
+
 _SSML_TEMPLATE = (
     '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="{lang}">'
     '<voice name="{voice}">{text}</voice>'
@@ -44,3 +46,21 @@ class AudioAgent:
                 f"Azure TTS request failed ({exc.response.status_code}): {exc.response.text[:200]}"
             ) from exc
         return base64.b64encode(response.content).decode()
+
+    async def list_voices(self, locale_prefix: str = "fr-") -> list[Voice]:
+        url = f"https://{self._region}.tts.speech.microsoft.com/cognitiveservices/voices/list"
+        response = await self._client.get(
+            url,
+            headers={"Ocp-Apim-Subscription-Key": self._api_key},
+            timeout=10.0,
+        )
+        response.raise_for_status()
+        voices = [
+            Voice(
+                id=v["ShortName"],
+                name=f"{v['DisplayName']} ({v['Gender']})",
+            )
+            for v in response.json()
+            if v.get("Locale", "").startswith(locale_prefix)
+        ]
+        return sorted(voices, key=lambda v: v.name)

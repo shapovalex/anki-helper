@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.anki_client import AnkiConnectError
 from app.main import app
 from app.routers.word_lookup import get_translation_agent, get_audio_agent, get_anki_client
-from app.schemas import TranslationResult
+from app.schemas import TranslationResult, Voice
 
 
 @pytest.fixture
@@ -32,7 +32,12 @@ def mock_translation_agent():
 @pytest.fixture
 def mock_audio_agent():
     agent = MagicMock()
-    agent.synthesize = AsyncMock(return_value="bW9jaw==")  # base64("mock")
+    agent.synthesize = AsyncMock(return_value="bW9jaw==")
+    agent.list_voices = AsyncMock(return_value=[
+        Voice(id="fr-FR-DeniseNeural", name="Denise (Female)"),
+        Voice(id="fr-FR-HenriNeural", name="Henri (Male)"),
+        Voice(id="fr-FR-EloiseNeural", name="Eloise (Female)"),
+    ])
     return agent
 
 
@@ -53,12 +58,13 @@ def client(mock_translation_agent, mock_audio_agent, mock_anki):
     app.dependency_overrides.clear()
 
 
-def test_voices_returns_non_empty_list(client):
+def test_voices_returns_list_from_agent(client, mock_audio_agent):
     response = client.get("/api/word-lookup/voices")
     assert response.status_code == 200
     voices = response.json()["voices"]
-    assert len(voices) >= 3
+    assert len(voices) == 3
     assert all("id" in v and "name" in v for v in voices)
+    mock_audio_agent.list_voices.assert_called_once()
 
 
 def test_generate_delegates_to_agent(client, mock_translation_agent):

@@ -23,14 +23,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/word-lookup", tags=["word-lookup"])
 
-_FRENCH_VOICES = [
-    Voice(id="fr-FR-DeniseNeural", name="Denise (Female)"),
-    Voice(id="fr-FR-EloiseNeural", name="Eloise (Female)"),
-    Voice(id="fr-FR-HenriNeural", name="Henri (Male)"),
-    Voice(id="fr-FR-VivienneMultilingualNeural", name="Vivienne Multilingual (Female)"),
-    Voice(id="fr-FR-RemyMultilingualNeural", name="Remy Multilingual (Male)"),
-]
-
 
 def _slugify(text: str) -> str:
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
@@ -72,8 +64,14 @@ def get_anki_client(request: Request) -> AnkiClient:
 
 
 @router.get("/voices", response_model=VoicesResponse)
-async def list_voices() -> VoicesResponse:
-    return VoicesResponse(voices=_FRENCH_VOICES)
+async def list_voices(
+    agent: AudioAgent = Depends(get_audio_agent),
+) -> VoicesResponse:
+    try:
+        voices = await agent.list_voices()
+        return VoicesResponse(voices=voices)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"Azure TTS error: {e.response.status_code}")
 
 
 @router.post("/generate", response_model=TranslationResult)
