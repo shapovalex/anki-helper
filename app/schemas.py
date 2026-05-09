@@ -89,11 +89,17 @@ class PhonemeResult(BaseModel):
     accuracy: float
 
 
+class SyllableResult(BaseModel):
+    grapheme: str
+    accuracy: float
+
+
 class WordResult(BaseModel):
     word: str
     accuracy: float
     error_type: str
     phonemes: list[PhonemeResult]
+    syllables: list[SyllableResult] = []
 
 
 class OverallScore(BaseModel):

@@ -4,7 +4,7 @@ import logging
 
 import httpx
 
-from app.schemas import OverallScore, PhonemeResult, PronunciationAssessResponse, WordResult
+from app.schemas import OverallScore, PhonemeResult, PronunciationAssessResponse, SyllableResult, WordResult
 
 log = logging.getLogger(__name__)
 
@@ -85,11 +85,19 @@ class PronunciationAgent:
                 )
                 for p in w.get("Phonemes", [])
             ]
+            syllables = [
+                SyllableResult(
+                    grapheme=s.get("Grapheme", ""),
+                    accuracy=s.get("AccuracyScore", 0.0),
+                )
+                for s in w.get("Syllables", [])
+            ]
             words.append(WordResult(
                 word=w["Word"],
                 accuracy=w.get("AccuracyScore", 0.0),
                 error_type=w.get("ErrorType", "None"),
                 phonemes=phonemes,
+                syllables=syllables,
             ))
         return PronunciationAssessResponse(
             overall=overall,

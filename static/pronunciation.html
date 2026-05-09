@@ -83,12 +83,12 @@
         }
         .phoneme-pill .pill-sym {
             font-family: var(--font-mono, monospace);
-            font-size: 0.88rem;
+            font-size: 0.78rem;
             font-weight: 700;
             line-height: 1;
         }
         .phoneme-pill .pill-bar-wrap {
-            width: 30px;
+            width: 100%;
             height: 3px;
             background: rgba(255,255,255,0.08);
             border-radius: 2px;
@@ -694,9 +694,14 @@
             const table = document.createElement('div');
             table.className = 'phoneme-table';
 
+            // Use syllable graphemes when phoneme symbols are absent (e.g. French)
+            const hasSyllables = data.words.length &&
+                (data.words[0].syllables || []).length &&
+                data.words[0].syllables[0].grapheme;
+
             const tableHeader = document.createElement('div');
             tableHeader.className = 'phoneme-table-header';
-            tableHeader.textContent = 'Phoneme breakdown';
+            tableHeader.textContent = hasSyllables ? 'Syllable breakdown' : 'Phoneme breakdown';
             table.appendChild(tableHeader);
 
             data.words.forEach(word => {
@@ -720,26 +725,30 @@
                 const pills = document.createElement('div');
                 pills.className = 'pills';
 
-                word.phonemes.forEach(p => {
+                const items = hasSyllables
+                    ? (word.syllables || []).map(s => ({ sym: s.grapheme, accuracy: s.accuracy }))
+                    : word.phonemes.map((p, i) => ({ sym: p.symbol || String(i + 1), accuracy: p.accuracy }));
+
+                items.forEach(item => {
                     const pill = document.createElement('div');
-                    pill.className = `phoneme-pill ${scoreClass(p.accuracy)}`;
+                    pill.className = `phoneme-pill ${scoreClass(item.accuracy)}`;
 
                     const sym = document.createElement('span');
                     sym.className = 'pill-sym';
-                    sym.textContent = p.symbol;
+                    sym.textContent = item.sym;
                     pill.appendChild(sym);
 
                     const barWrap = document.createElement('div');
                     barWrap.className = 'pill-bar-wrap';
                     const barFill = document.createElement('div');
                     barFill.className = 'pill-bar-fill';
-                    barFill.style.width = `${Math.round(p.accuracy)}%`;
+                    barFill.style.width = `${Math.round(item.accuracy)}%`;
                     barWrap.appendChild(barFill);
                     pill.appendChild(barWrap);
 
                     const num = document.createElement('span');
                     num.className = 'pill-num';
-                    num.textContent = Math.round(p.accuracy);
+                    num.textContent = Math.round(item.accuracy);
                     pill.appendChild(num);
 
                     pills.appendChild(pill);
