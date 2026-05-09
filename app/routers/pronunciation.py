@@ -151,8 +151,10 @@ async def answer(
     anki_client: AnkiClient = Depends(get_anki_client),
 ) -> PronunciationAnswerResponse:
     try:
-        await anki_client.invoke("answerCard", id=body.card_id, ease=body.ease)
-        return PronunciationAnswerResponse(ok=True)
+        result = await anki_client.invoke(
+            "answerCards", answers=[{"cardId": body.card_id, "ease": body.ease}]
+        )
+        return PronunciationAnswerResponse(ok=bool(result and result[0]))
     except AnkiConnectError as e:
         raise HTTPException(status_code=502, detail=str(e))
     except httpx.ConnectError:

@@ -181,12 +181,14 @@ def test_recommendations_delegates_to_agent(client, mock_recommendations_agent):
     mock_recommendations_agent.recommend.assert_called_once()
 
 
-def test_answer_calls_answerCard(client, mock_anki):
-    mock_anki.invoke = AsyncMock(return_value=True)
+def test_answer_calls_answerCards(client, mock_anki):
+    mock_anki.invoke = AsyncMock(return_value=[True])
     response = client.post("/api/pronunciation/answer", json={"card_id": 1234, "ease": 3})
     assert response.status_code == 200
     assert response.json()["ok"] is True
-    mock_anki.invoke.assert_called_once_with("answerCard", id=1234, ease=3)
+    mock_anki.invoke.assert_called_once_with(
+        "answerCards", answers=[{"cardId": 1234, "ease": 3}]
+    )
 
 
 def test_answer_returns_503_when_anki_not_running(client, mock_anki):
