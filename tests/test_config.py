@@ -7,7 +7,7 @@ from pathlib import Path
 def isolated_env(tmp_path, monkeypatch):
     fake_env = tmp_path / ".env.local"
     monkeypatch.setattr("app.config.ENV_LOCAL_PATH", fake_env)
-    for key in ["OPENROUTER_API_KEY", "OPENROUTER_MODEL", "AZURE_TTS_KEY", "AZURE_TTS_REGION", "NOTE_TYPE_NAME", "SENTENCE_NOTE_TYPE_NAME"]:
+    for key in ["OPENROUTER_API_KEY", "OPENROUTER_MODEL", "AZURE_TTS_KEY", "AZURE_TTS_REGION", "NOTE_TYPE_NAME", "SENTENCE_NOTE_TYPE_NAME", "ENGLISH_NOTE_TYPE_NAME", "ENGLISH_SENTENCE_NOTE_TYPE_NAME"]:
         monkeypatch.delenv(key, raising=False)
     return fake_env
 
@@ -72,3 +72,27 @@ def test_sentence_note_type_default():
     from app.config import ConfigManager
     config = ConfigManager()
     assert config.sentence_note_type_name == "French-Russian-Sentence"
+
+
+def test_english_note_type_name_default(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("ENGLISH_NOTE_TYPE_NAME", raising=False)
+    from app.config import ConfigManager
+    config = ConfigManager()
+    assert config.english_note_type_name == "English-Russian"
+
+
+def test_english_sentence_note_type_name_default(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("ENGLISH_SENTENCE_NOTE_TYPE_NAME", raising=False)
+    from app.config import ConfigManager
+    config = ConfigManager()
+    assert config.english_sentence_note_type_name == "English-Russian-Sentence"
+
+
+def test_english_note_type_name_from_env(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ENGLISH_NOTE_TYPE_NAME", "MyEnglish")
+    from app.config import ConfigManager
+    config = ConfigManager()
+    assert config.english_note_type_name == "MyEnglish"

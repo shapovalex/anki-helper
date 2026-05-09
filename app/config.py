@@ -8,6 +8,8 @@ _DEFAULTS: dict[str, str] = {
     "AZURE_TTS_REGION": "westeurope",
     "NOTE_TYPE_NAME": "French-Russian",
     "SENTENCE_NOTE_TYPE_NAME": "French-Russian-Sentence",
+    "ENGLISH_NOTE_TYPE_NAME": "English-Russian",
+    "ENGLISH_SENTENCE_NOTE_TYPE_NAME": "English-Russian-Sentence",
 }
 
 _MANAGED_KEYS = {
@@ -17,6 +19,8 @@ _MANAGED_KEYS = {
     "AZURE_TTS_REGION",
     "NOTE_TYPE_NAME",
     "SENTENCE_NOTE_TYPE_NAME",
+    "ENGLISH_NOTE_TYPE_NAME",
+    "ENGLISH_SENTENCE_NOTE_TYPE_NAME",
 }
 
 
@@ -78,6 +82,14 @@ class ConfigManager:
     @property
     def sentence_note_type_name(self) -> str:
         return self._data["SENTENCE_NOTE_TYPE_NAME"]
+
+    @property
+    def english_note_type_name(self) -> str:
+        return self._data["ENGLISH_NOTE_TYPE_NAME"]
+
+    @property
+    def english_sentence_note_type_name(self) -> str:
+        return self._data["ENGLISH_SENTENCE_NOTE_TYPE_NAME"]
 
     @property
     def openrouter_key_set(self) -> bool:
