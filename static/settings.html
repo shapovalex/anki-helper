@@ -54,6 +54,18 @@
             <p class="hint">Must exactly match the note type in Anki with fields: french_sentence, russian_sentence, audio.</p>
         </div>
 
+        <div class="field">
+            <label>English Note Type Name</label>
+            <input type="text" id="english-note-type" placeholder="English-Russian">
+            <p class="hint">Must exactly match the note type in Anki with fields: english_word, russian_word, example, english_word_audio, example_audio.</p>
+        </div>
+
+        <div class="field">
+            <label>English Sentence Note Type Name</label>
+            <input type="text" id="english-sentence-note-type" placeholder="English-Russian-Sentence">
+            <p class="hint">Must exactly match the note type in Anki with fields: english_sentence, russian_sentence, audio.</p>
+        </div>
+
         <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
             <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
             <span id="status-msg"></span>
@@ -70,6 +82,8 @@
             document.getElementById('azure-region').value     = s.azure_region;
             document.getElementById('note-type').value        = s.note_type;
             document.getElementById('sentence-note-type').value = s.sentence_note_type;
+            document.getElementById('english-note-type').value = s.english_note_type;
+            document.getElementById('english-sentence-note-type').value = s.english_sentence_note_type;
             if (s.openrouter_key_set) document.getElementById('openrouter-key').placeholder = '••••• (already set — leave blank to keep)';
             if (s.azure_key_set)      document.getElementById('azure-key').placeholder      = '••••• (already set — leave blank to keep)';
         }
@@ -85,6 +99,8 @@
             const region   = document.getElementById('azure-region').value.trim();
             const noteType = document.getElementById('note-type').value.trim();
             const sentenceNoteType = document.getElementById('sentence-note-type').value.trim();
+            const englishNoteType = document.getElementById('english-note-type').value.trim();
+            const englishSentenceNoteType = document.getElementById('english-sentence-note-type').value.trim();
 
             if (orKey)    body.openrouter_api_key = orKey;
             if (azKey)    body.azure_api_key      = azKey;
@@ -92,6 +108,8 @@
             if (region)   body.azure_region       = region;
             if (noteType) body.note_type          = noteType;
             if (sentenceNoteType) body.sentence_note_type = sentenceNoteType;
+            if (englishNoteType) body.english_note_type = englishNoteType;
+            if (englishSentenceNoteType) body.english_sentence_note_type = englishSentenceNoteType;
 
             try {
                 const res = await fetch('/api/settings', {
