@@ -349,25 +349,6 @@ button:disabled, .btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-eve
 
 .deck-item:hover { border-color: rgba(212, 168, 67, 0.35); }
 
-/* ── Home page hero ─────────────────────────────────────────── */
-.home-hero {
-  margin-top: 3rem;
-}
-
-.home-hero p {
-  font-size: 1rem;
-  color: var(--text-muted);
-  max-width: 38ch;
-  margin-bottom: 2rem;
-  line-height: 1.7;
-}
-
-.home-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
 /* ── Divider ────────────────────────────────────────────────── */
 .divider {
   height: 1px;
