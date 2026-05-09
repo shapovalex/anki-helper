@@ -14,9 +14,13 @@
             <p class="page-subtitle">How to set up Anki for use with this app.</p>
         </div>
 
-        <p class="section-heading">Note Type Setup</p>
+        <p class="section-heading">AnkiConnect Setup</p>
 
-        <p>Create a note type in Anki whose name exactly matches the <strong>Note Type Name</strong> configured in <a href="/settings">Settings</a> (default: <code>French-Russian</code>). The note type must have at least these five fields, in any order:</p>
+        <p>This app communicates with Anki via the <strong>AnkiConnect</strong> add-on. Install it from within Anki: go to <em>Tools → Add-ons → Get Add-ons</em> and enter code <code>2055492159</code>. Restart Anki after installing. AnkiConnect runs a local server on port 8765 — the app connects to it automatically whenever Anki is open.</p>
+
+        <p class="section-heading">French Word Note Type</p>
+
+        <p>Create a note type whose name exactly matches the <strong>Note Type Name</strong> configured in <a href="/settings">Settings</a> (default: <code>French-Russian</code>). The note type must have at least these five fields:</p>
 
         <ul>
             <li><code>french_word</code></li>
@@ -24,6 +28,38 @@
             <li><code>example</code></li>
             <li><code>french_word_audio</code></li>
             <li><code>example_audio</code></li>
+        </ul>
+
+        <p class="section-heading">French Sentence Note Type</p>
+
+        <p>Create a note type whose name exactly matches the <strong>Sentence Note Type Name</strong> in <a href="/settings">Settings</a> (default: <code>French-Russian-Sentence</code>). Required fields:</p>
+
+        <ul>
+            <li><code>french_sentence</code></li>
+            <li><code>russian_sentence</code></li>
+            <li><code>audio</code></li>
+        </ul>
+
+        <p class="section-heading">English Word Note Type</p>
+
+        <p>Create a note type whose name exactly matches the <strong>English Note Type Name</strong> in <a href="/settings">Settings</a> (default: <code>English-Russian</code>). Required fields:</p>
+
+        <ul>
+            <li><code>english_word</code></li>
+            <li><code>russian_word</code></li>
+            <li><code>example</code></li>
+            <li><code>english_word_audio</code></li>
+            <li><code>example_audio</code></li>
+        </ul>
+
+        <p class="section-heading">English Sentence Note Type</p>
+
+        <p>Create a note type whose name exactly matches the <strong>English Sentence Note Type Name</strong> in <a href="/settings">Settings</a> (default: <code>English-Russian-Sentence</code>). Required fields:</p>
+
+        <ul>
+            <li><code>english_sentence</code></li>
+            <li><code>russian_sentence</code></li>
+            <li><code>audio</code></li>
         </ul>
     </main>
 
