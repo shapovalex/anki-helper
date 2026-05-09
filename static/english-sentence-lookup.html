@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Lookup (EN) — Anki Helper</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main class="page">
+        <div class="page-header">
+            <h1 class="page-title">Sentence Lookup (EN)</h1>
+            <p class="page-subtitle">Translate an English sentence and generate audio for Anki.</p>
+        </div>
+
+        <div id="keys-banner" class="banner banner-error" style="display:none;">
+            API keys not configured. <a href="/settings">Go to Settings →</a>
+        </div>
+
+        <div class="field">
+            <label>English Sentence</label>
+            <textarea id="sentence-input" rows="3" placeholder="e.g. She had a serendipitous encounter." autocomplete="off"></textarea>
+        </div>
+
+        <div class="field" style="margin-bottom: 1.25rem;">
+            <label>Azure Voice</label>
+            <select id="voice-select"></select>
+        </div>
+
+        <button id="generate-btn" class="btn-primary btn-full" disabled>⚡ Generate</button>
+        <div id="generate-error" class="inline-error"></div>
+
+        <div id="result-section" class="result-section" style="display:none;">
+            <div id="eval-badge" class="eval-badge"></div>
+
+            <div class="field">
+                <label>Translation (Russian)</label>
+                <textarea id="translation" rows="2"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Audio</label>
+                <div class="audio-row">
+                    <audio id="sentence-audio" controls></audio>
+                    <button class="btn-secondary" onclick="regenAudio()">↺ Re-generate</button>
+                </div>
+                <div id="sentence-audio-error" class="inline-error"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="add-row">
+                <label style="flex-shrink:0; margin-bottom:0;">Deck</label>
+                <select id="deck-select"></select>
+                <button id="add-anki-btn" class="btn-success" disabled onclick="addToAnki()">+ Add to Anki</button>
+            </div>
+            <div id="add-anki-status" style="margin-top: 0.5rem;"></div>
+        </div>
+    </main>
+
+    <script src="/static/js/menu.js"></script>
+    <script>
+        const LS_VOICE = 'anki_en_sentence_voice';
+        const LS_DECK  = 'anki_en_sentence_deck';
+
+        let audioBase64  = null;
+        let noteTypeName = 'English-Russian-Sentence';
+
+        async function init() {
+            const vRes = await fetch('/api/english-sentence-lookup/voices');
+            const { voices } = await vRes.json();
+            const voiceSel = document.getElementById('voice-select');
+            voices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.name;
+                voiceSel.appendChild(opt);
+            });
+
+            const savedVoice = localStorage.getItem(LS_VOICE);
+            if (savedVoice) voiceSel.value = savedVoice;
+
+            voiceSel.addEventListener('change', e =>
+                localStorage.setItem(LS_VOICE, e.target.value));
+
+            const sRes     = await fetch('/api/settings');
+            const settings = await sRes.json();
+            noteTypeName   = settings.english_sentence_note_type;
+
+            if (!settings.openrouter_key_set || !settings.azure_key_set) {
+                document.getElementById('keys-banner').style.display = 'block';
+            } else {
+                document.getElementById('generate-btn').disabled = false;
+            }
+
+            try {
+                const dRes    = await fetch('/api/decks');
+                const { decks } = await dRes.json();
+                const deckSel = document.getElementById('deck-select');
+                decks.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    deckSel.appendChild(opt);
+                });
+                const savedDeck = localStorage.getItem(LS_DECK);
+                if (savedDeck) deckSel.value = savedDeck;
+                deckSel.addEventListener('change', e =>
+                    localStorage.setItem(LS_DECK, e.target.value));
+            } catch { /* Anki not running */ }
+        }
+
+        async function generate() {
+            const sentence = document.getElementById('sentence-input').value.trim();
+            if (!sentence) return;
+
+            audioBase64 = null;
+            document.getElementById('add-anki-btn').disabled = true;
+            document.getElementById('result-section').style.display = 'none';
+            document.getElementById('generate-error').textContent = '';
+            document.getElementById('sentence-audio').src = '';
+
+            const btn = document.getElementById('generate-btn');
+            btn.textContent = '⏳ Generating…';
+            btn.disabled    = true;
+
+            try {
+                const res = await fetch('/api/english-sentence-lookup/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sentence }),
+                });
+
+                if (!res.ok) {
+                    const { detail } = await res.json().catch(() => ({}));
+                    document.getElementById('generate-error').textContent = detail ?? `Error ${res.status}`;
+                    return;
+                }
+
+                const data = await res.json();
+                document.getElementById('translation').value = data.russian_sentence;
+
+                const badge = document.getElementById('eval-badge');
+                badge.textContent = (data.is_valid ? '✓ ' : '⚠ ') + data.sentence_evaluation;
+                badge.className   = 'eval-badge ' + (data.is_valid ? 'eval-valid' : 'eval-warning');
+
+                document.getElementById('result-section').style.display = 'block';
+
+                await generateAudio(sentence);
+            } catch {
+                document.getElementById('generate-error').textContent = 'Network error.';
+            } finally {
+                btn.textContent = '⚡ Generate';
+                btn.disabled    = false;
+            }
+        }
+
+        async function generateAudio(text) {
+            const audioEl = document.getElementById('sentence-audio');
+            const errEl   = document.getElementById('sentence-audio-error');
+            errEl.textContent = '';
+
+            const voice = document.getElementById('voice-select').value;
+
+            try {
+                const res = await fetch('/api/english-sentence-lookup/audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice }),
+                });
+
+                if (!res.ok) {
+                    const { detail } = await res.json().catch(() => ({}));
+                    errEl.textContent = detail ?? `Audio error ${res.status}`;
+                    return;
+                }
+
+                const { audio_base64 } = await res.json();
+                audioEl.src = 'data:audio/mpeg;base64,' + audio_base64;
+                audioBase64 = audio_base64;
+            } catch {
+                errEl.textContent = 'Audio generation failed.';
+            }
+
+            document.getElementById('add-anki-btn').disabled = !audioBase64;
+        }
+
+        async function regenAudio() {
+            const text = document.getElementById('sentence-input').value.trim();
+            if (!text) return;
+            await generateAudio(text);
+        }
+
+        async function addToAnki() {
+            const statusEl = document.getElementById('add-anki-status');
+            statusEl.textContent = '';
+            document.getElementById('add-anki-btn').disabled = true;
+
+            try {
+                const res = await fetch('/api/english-sentence-lookup/add-to-anki', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        deck:             document.getElementById('deck-select').value,
+                        note_type:        noteTypeName,
+                        english_sentence: document.getElementById('sentence-input').value.trim(),
+                        russian_sentence: document.getElementById('translation').value,
+                        audio_base64:     audioBase64,
+                    }),
+                });
+
+                if (!res.ok) {
+                    const { detail } = await res.json().catch(() => ({}));
+                    const errSpan = document.createElement('span');
+                    errSpan.className = 'inline-error';
+                    errSpan.textContent = detail ?? 'Failed to add.';
+                    statusEl.replaceChildren(errSpan);
+                    return;
+                }
+
+                statusEl.innerHTML = '<span class="success-msg">✓ Added to Anki!</span>';
+            } catch {
+                statusEl.innerHTML = '<span class="inline-error">Network error.</span>';
+            } finally {
+                document.getElementById('add-anki-btn').disabled = !audioBase64;
+            }
+        }
+
+        document.getElementById('generate-btn').addEventListener('click', generate);
+
+        init();
+    </script>
+</body>
+</html>
