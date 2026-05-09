@@ -220,7 +220,6 @@
                     </div>
 
                     <div class="field">
-                        <label>Words</label>
                         <div id="words-container"></div>
                     </div>
 
@@ -689,42 +688,69 @@
                 hide('heard-row');
             }
 
-            // Find worst-scoring word index
-            let worstIdx = 0;
-            data.words.forEach((w, i) => { if (w.accuracy < data.words[worstIdx].accuracy) worstIdx = i; });
-
             const container = document.getElementById('words-container');
             container.innerHTML = '';
-            data.words.forEach((word, idx) => {
-                const wordWrap = document.createElement('div');
-                wordWrap.style.marginBottom = '0.5rem';
 
-                const chip = document.createElement('div');
-                const sc = scoreClass(word.accuracy);
-                chip.className = `word-chip ${sc}`;
+            const table = document.createElement('div');
+            table.className = 'phoneme-table';
+
+            const tableHeader = document.createElement('div');
+            tableHeader.className = 'phoneme-table-header';
+            tableHeader.textContent = 'Phoneme breakdown';
+            table.appendChild(tableHeader);
+
+            data.words.forEach(word => {
+                const row = document.createElement('div');
+                row.className = 'phoneme-word-row';
+
+                const wordCol = document.createElement('div');
+                wordCol.className = 'word-col';
+
+                const wordName = document.createElement('div');
+                wordName.className = `word-col-name ${scoreClass(word.accuracy)}`;
+                wordName.textContent = word.word;
+                wordCol.appendChild(wordName);
+
+                const wordScore = document.createElement('div');
+                wordScore.className = 'word-col-score';
                 const errorLabel = word.error_type !== 'None' ? ` · ${word.error_type}` : '';
-                chip.textContent = `${word.word} ${Math.round(word.accuracy)}${errorLabel}`;
+                wordScore.textContent = `${Math.round(word.accuracy)}${errorLabel}`;
+                wordCol.appendChild(wordScore);
 
-                const phonemeRow = document.createElement('div');
-                phonemeRow.className = 'phoneme-row';
-                phonemeRow.style.display = idx === worstIdx ? 'flex' : 'none';
+                const pills = document.createElement('div');
+                pills.className = 'pills';
 
                 word.phonemes.forEach(p => {
-                    const pc = document.createElement('span');
-                    const psc = scoreClass(p.accuracy);
-                    pc.className = `phoneme-chip ${psc}`;
-                    pc.textContent = `${p.symbol} ${Math.round(p.accuracy)}`;
-                    phonemeRow.appendChild(pc);
+                    const pill = document.createElement('div');
+                    pill.className = `phoneme-pill ${scoreClass(p.accuracy)}`;
+
+                    const sym = document.createElement('span');
+                    sym.className = 'pill-sym';
+                    sym.textContent = p.symbol;
+                    pill.appendChild(sym);
+
+                    const barWrap = document.createElement('div');
+                    barWrap.className = 'pill-bar-wrap';
+                    const barFill = document.createElement('div');
+                    barFill.className = 'pill-bar-fill';
+                    barFill.style.width = `${Math.round(p.accuracy)}%`;
+                    barWrap.appendChild(barFill);
+                    pill.appendChild(barWrap);
+
+                    const num = document.createElement('span');
+                    num.className = 'pill-num';
+                    num.textContent = Math.round(p.accuracy);
+                    pill.appendChild(num);
+
+                    pills.appendChild(pill);
                 });
 
-                chip.addEventListener('click', () => {
-                    phonemeRow.style.display = phonemeRow.style.display === 'none' ? 'flex' : 'none';
-                });
-
-                wordWrap.appendChild(chip);
-                wordWrap.appendChild(phonemeRow);
-                container.appendChild(wordWrap);
+                row.appendChild(wordCol);
+                row.appendChild(pills);
+                table.appendChild(row);
             });
+
+            container.appendChild(table);
 
             renderColoredPhrase(currentCardText, data.words);
 
