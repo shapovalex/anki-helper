@@ -7,6 +7,7 @@ _DEFAULTS: dict[str, str] = {
     "OPENROUTER_MODEL": "google/gemini-flash-1.5",
     "AZURE_TTS_REGION": "westeurope",
     "NOTE_TYPE_NAME": "French-Russian",
+    "SENTENCE_NOTE_TYPE_NAME": "French-Russian-Sentence",
 }
 
 _MANAGED_KEYS = {
@@ -15,6 +16,7 @@ _MANAGED_KEYS = {
     "AZURE_TTS_KEY",
     "AZURE_TTS_REGION",
     "NOTE_TYPE_NAME",
+    "SENTENCE_NOTE_TYPE_NAME",
 }
 
 
@@ -72,6 +74,10 @@ class ConfigManager:
     @property
     def note_type_name(self) -> str:
         return self._data["NOTE_TYPE_NAME"]
+
+    @property
+    def sentence_note_type_name(self) -> str:
+        return self._data["SENTENCE_NOTE_TYPE_NAME"]
 
     @property
     def openrouter_key_set(self) -> bool:

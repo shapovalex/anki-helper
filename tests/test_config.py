@@ -7,7 +7,7 @@ from pathlib import Path
 def isolated_env(tmp_path, monkeypatch):
     fake_env = tmp_path / ".env.local"
     monkeypatch.setattr("app.config.ENV_LOCAL_PATH", fake_env)
-    for key in ["OPENROUTER_API_KEY", "OPENROUTER_MODEL", "AZURE_TTS_KEY", "AZURE_TTS_REGION", "NOTE_TYPE_NAME"]:
+    for key in ["OPENROUTER_API_KEY", "OPENROUTER_MODEL", "AZURE_TTS_KEY", "AZURE_TTS_REGION", "NOTE_TYPE_NAME", "SENTENCE_NOTE_TYPE_NAME"]:
         monkeypatch.delenv(key, raising=False)
     return fake_env
 
@@ -66,3 +66,9 @@ def test_reload_picks_up_file_changes(isolated_env):
     isolated_env.write_text("OPENROUTER_API_KEY=late-key\n")
     config.reload()
     assert config.openrouter_api_key == "late-key"
+
+
+def test_sentence_note_type_default():
+    from app.config import ConfigManager
+    config = ConfigManager()
+    assert config.sentence_note_type_name == "French-Russian-Sentence"
