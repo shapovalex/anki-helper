@@ -79,6 +79,7 @@ class PronunciationCardResponse(BaseModel):
 
 class PronunciationAssessRequest(BaseModel):
     audio_base64: str
+    audio_mime_type: str = "audio/webm;codecs=opus"
     reference_text: str
     language: str
 

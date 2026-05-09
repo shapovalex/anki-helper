@@ -66,6 +66,7 @@
             position: relative;
             user-select: none;
         }
+        #record-btn:active { transform: none; }
         #record-btn.recording {
             background: var(--error);
             color: white;
@@ -246,6 +247,16 @@
         let micLevelRafId   = null;
         let lastRecordingBlob = null;
         let recordingRequested = false;
+        let selectedMimeType = null;
+
+        function getSupportedMimeType() {
+            const candidates = [
+                'audio/webm;codecs=opus',
+                'audio/ogg;codecs=opus',
+                'audio/mp4',
+            ];
+            return candidates.find(t => MediaRecorder.isTypeSupported(t)) ?? null;
+        }
 
         function scoreClass(n) {
             return n >= 80 ? 'score-green' : n >= 50 ? 'score-yellow' : 'score-red';
@@ -254,18 +265,36 @@
         function startMicLevelLoop(stream) {
             stopMicLevelLoop();
             audioContext = new AudioContext();
-            audioContext.resume();
+            audioContext.resume().catch(() => {});
             const source   = audioContext.createMediaStreamSource(stream);
             const analyser = audioContext.createAnalyser();
             analyser.fftSize = 256;
             source.connect(analyser);
+            // Route through silent gain so Chrome processes the audio graph (analyser gets real data)
+            const silentGain = audioContext.createGain();
+            silentGain.gain.value = 0;
+            source.connect(silentGain);
+            silentGain.connect(audioContext.destination);
             const data = new Uint8Array(analyser.frequencyBinCount);
             const fill = document.getElementById('mic-bar-fill');
+            let silenceTicks = 0;
 
             function tick() {
                 analyser.getByteFrequencyData(data);
                 const avg = data.reduce((s, v) => s + v, 0) / data.length;
                 fill.style.width = Math.min(100, (avg / 128) * 100) + '%';
+                if (mediaRecorder?.state === 'recording') {
+                    if (avg < 1) {
+                        silenceTicks++;
+                        if (silenceTicks === 60) {
+                            document.getElementById('record-status').textContent =
+                                '⚠ No audio detected. Check System Settings → Sound → Input.';
+                        }
+                    } else {
+                        silenceTicks = 0;
+                        document.getElementById('record-status').textContent = '';
+                    }
+                }
                 micLevelRafId = requestAnimationFrame(tick);
             }
             micLevelRafId = requestAnimationFrame(tick);
@@ -318,11 +347,10 @@
 
             const btn = document.getElementById('record-btn');
             btn.addEventListener('mousedown',  startRecording);
-            btn.addEventListener('mouseup',    stopRecording);
-            btn.addEventListener('mouseleave', stopRecording);
+            document.addEventListener('mouseup', stopRecording);
             btn.addEventListener('touchstart', e => { e.preventDefault(); startRecording(); }, { passive: false });
-            btn.addEventListener('touchend',   stopRecording);
-            btn.addEventListener('touchcancel', stopRecording);
+            document.addEventListener('touchend',    stopRecording);
+            document.addEventListener('touchcancel', stopRecording);
         }
 
         function show(id) { document.getElementById(id).style.display = 'block'; }
@@ -416,6 +444,14 @@
             if (mediaRecorder && mediaRecorder.state === 'recording') return;
             lastRecordingBlob = null;
             audioChunks = [];
+
+            const mimeType = getSupportedMimeType();
+            if (!mimeType) {
+                document.getElementById('record-status').textContent = 'Recording not supported in this browser. Try Chrome or Firefox.';
+                return;
+            }
+            selectedMimeType = mimeType;
+
             let stream;
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -428,7 +464,14 @@
                 return;
             }
             startMicLevelLoop(stream);
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+            try {
+                mediaRecorder = new MediaRecorder(stream, { mimeType });
+            } catch (err) {
+                stopMicLevelLoop();
+                stream.getTracks().forEach(t => t.stop());
+                document.getElementById('record-status').textContent = `Recording error: ${err.message}`;
+                return;
+            }
             mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
             mediaRecorder.start();
             document.getElementById('record-btn').classList.add('recording');
@@ -449,7 +492,7 @@
 
             await new Promise(resolve => { mediaRecorder.onstop = resolve; });
 
-            const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+            const blob = new Blob(audioChunks, { type: selectedMimeType });
             lastRecordingBlob = blob;
             const audioBase64 = await new Promise(resolve => {
                 const reader = new FileReader();
@@ -467,6 +510,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         audio_base64: audioBase64,
+                        audio_mime_type: selectedMimeType,
                         reference_text: document.getElementById('pronounce-text').textContent,
                         language: selectedLang,
                     }),
@@ -487,6 +531,7 @@
         function showResults(data) {
             document.getElementById('record-status').textContent = '';
             show('results-section');
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
             const score = Math.round(data.overall.pron_score);
             const badge = document.getElementById('overall-badge');

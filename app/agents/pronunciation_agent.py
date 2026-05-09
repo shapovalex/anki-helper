@@ -13,7 +13,11 @@ class PronunciationAgent:
         self._region = region
 
     async def assess(
-        self, audio_bytes: bytes, reference_text: str, language: str
+        self,
+        audio_bytes: bytes,
+        reference_text: str,
+        language: str,
+        audio_mime_type: str = "audio/webm;codecs=opus",
     ) -> PronunciationAssessResponse:
         config = json.dumps({
             "ReferenceText": reference_text,
@@ -32,7 +36,7 @@ class PronunciationAgent:
             headers={
                 "Ocp-Apim-Subscription-Key": self._api_key,
                 "Pronunciation-Assessment": config_b64,
-                "Content-Type": "audio/webm;codecs=opus",
+                "Content-Type": audio_mime_type,
             },
             content=audio_bytes,
             timeout=30.0,

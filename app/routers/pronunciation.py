@@ -87,10 +87,10 @@ async def get_card(
 ) -> PronunciationCardResponse:
     try:
         card_ids = await anki_client.invoke(
-            "findCards", query=f'deck:"{deck}" is:due'
+            "findCards", query=f'deck:"{deck}" (is:due OR is:new)'
         )
         if not card_ids:
-            raise HTTPException(status_code=404, detail="No due cards in deck.")
+            raise HTTPException(status_code=404, detail="No due or new cards in deck.")
         card_id = random.choice(card_ids)
         cards_info = await anki_client.invoke("cardsInfo", cards=[card_id])
         card = cards_info[0]
@@ -124,6 +124,7 @@ async def assess(
             audio_bytes=audio_bytes,
             reference_text=body.reference_text,
             language=body.language,
+            audio_mime_type=body.audio_mime_type,
         )
     except ValueError as e:
         raise HTTPException(status_code=502, detail=str(e))
