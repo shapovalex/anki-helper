@@ -286,7 +286,10 @@
 
                 if (!res.ok) {
                     const { detail } = await res.json().catch(() => ({}));
-                    statusEl.innerHTML = `<span class="inline-error">${detail ?? 'Failed to add.'}</span>`;
+                    const errSpan = document.createElement('span');
+                    errSpan.className = 'inline-error';
+                    errSpan.textContent = detail ?? 'Failed to add.';
+                    statusEl.replaceChildren(errSpan);
                     return;
                 }
 
