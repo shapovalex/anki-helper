@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 
+import logging
 import httpx
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +14,7 @@ from app.routers import pronunciation as pronunciation_router
 from app.routers import settings as settings_router
 from app.routers import word_lookup as word_lookup_router
 
+logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

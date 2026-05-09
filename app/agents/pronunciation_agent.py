@@ -26,6 +26,7 @@ class PronunciationAgent:
             "ReferenceText": reference_text,
             "GradingSystem": "HundredMark",
             "Granularity": "Phoneme",
+            "Dimension": "Comprehensive",
             "EnableMiscue": True,
         })
         config_b64 = base64.b64encode(config.encode()).decode()
@@ -34,6 +35,10 @@ class PronunciationAgent:
             f"/speech/recognition/conversation/cognitiveservices/v1"
             f"?language={language}&format=detailed"
         )
+        # Azure requires the exact codec/samplerate MIME for pronunciation assessment.
+        # Plain "audio/wav" is accepted for STT but silently disables PA scoring.
+        if audio_mime_type == "audio/wav":
+            audio_mime_type = "audio/wav; codecs=audio/pcm; samplerate=16000"
         log.info(
             "Azure STT request: reference_text=%r language=%s mime=%s audio_bytes=%d",
             reference_text, language, audio_mime_type, len(audio_bytes),
@@ -64,27 +69,26 @@ class PronunciationAgent:
         if status not in ("Success", ""):
             raise ValueError(f"Azure recognition failed: {status}")
         nbest = data.get("NBest", [{}])[0]
-        pa = nbest.get("PronunciationAssessment", {})
+        # REST API returns scores flat in each object, not nested under "PronunciationAssessment"
         overall = OverallScore(
-            accuracy=pa.get("AccuracyScore", 0.0),
-            fluency=pa.get("FluencyScore", 0.0),
-            completeness=pa.get("CompletenessScore", 0.0),
-            pron_score=pa.get("PronScore", 0.0),
+            accuracy=nbest.get("AccuracyScore", 0.0),
+            fluency=nbest.get("FluencyScore", 0.0),
+            completeness=nbest.get("CompletenessScore", 0.0),
+            pron_score=nbest.get("PronScore", 0.0),
         )
         words = []
         for w in nbest.get("Words", []):
-            wpa = w.get("PronunciationAssessment", {})
             phonemes = [
                 PhonemeResult(
                     symbol=p["Phoneme"],
-                    accuracy=p.get("PronunciationAssessment", {}).get("AccuracyScore", 0.0),
+                    accuracy=p.get("AccuracyScore", 0.0),
                 )
                 for p in w.get("Phonemes", [])
             ]
             words.append(WordResult(
                 word=w["Word"],
-                accuracy=wpa.get("AccuracyScore", 0.0),
-                error_type=wpa.get("ErrorType", "None"),
+                accuracy=w.get("AccuracyScore", 0.0),
+                error_type=w.get("ErrorType", "None"),
                 phonemes=phonemes,
             ))
         return PronunciationAssessResponse(
