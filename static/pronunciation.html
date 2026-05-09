@@ -438,6 +438,48 @@
             }
         }
 
+        // ── WAV conversion ────────────────────────────────────────
+        async function blobToWav(blob, targetSampleRate = 16000) {
+            const arrayBuffer = await blob.arrayBuffer();
+            const decodeCtx = new AudioContext();
+            let audioBuffer;
+            try {
+                audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer);
+            } finally {
+                decodeCtx.close().catch(() => {});
+            }
+            const numFrames = Math.round(audioBuffer.duration * targetSampleRate);
+            const offCtx = new OfflineAudioContext(1, numFrames, targetSampleRate);
+            const source = offCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(offCtx.destination);
+            source.start(0);
+            const resampled = await offCtx.startRendering();
+            return encodeWav(resampled);
+        }
+
+        function encodeWav(audioBuffer) {
+            const samples = audioBuffer.getChannelData(0);
+            const numSamples = samples.length;
+            const sampleRate = audioBuffer.sampleRate;
+            const dataBytes = numSamples * 2;
+            const buf = new ArrayBuffer(44 + dataBytes);
+            const v = new DataView(buf);
+            const ws = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+            ws(0, 'RIFF'); v.setUint32(4, 36 + dataBytes, true); ws(8, 'WAVE');
+            ws(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+            v.setUint16(22, 1, true); v.setUint32(24, sampleRate, true);
+            v.setUint32(28, sampleRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+            ws(36, 'data'); v.setUint32(40, dataBytes, true);
+            let off = 44;
+            for (let i = 0; i < numSamples; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                off += 2;
+            }
+            return new Blob([buf], { type: 'audio/wav' });
+        }
+
         // ── Recording ─────────────────────────────────────────────
         async function startRecording() {
             recordingRequested = true;
@@ -492,25 +534,35 @@
 
             await new Promise(resolve => { mediaRecorder.onstop = resolve; });
 
-            const blob = new Blob(audioChunks, { type: selectedMimeType });
-            lastRecordingBlob = blob;
+            const rawBlob = new Blob(audioChunks, { type: selectedMimeType });
+            lastRecordingBlob = rawBlob;
+
+            let submitBlob = rawBlob;
+            let submitMime = selectedMimeType;
+            try {
+                submitBlob = await blobToWav(rawBlob);
+                submitMime = 'audio/wav';
+            } catch (err) {
+                console.warn('WAV conversion failed, sending raw audio:', err);
+            }
+
             const audioBase64 = await new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.readAsDataURL(blob);
+                reader.readAsDataURL(submitBlob);
             });
 
-            await submitAudio(audioBase64);
+            await submitAudio(audioBase64, submitMime);
         }
 
-        async function submitAudio(audioBase64) {
+        async function submitAudio(audioBase64, mimeType = selectedMimeType) {
             try {
                 const res = await fetch('/api/pronunciation/assess', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         audio_base64: audioBase64,
-                        audio_mime_type: selectedMimeType,
+                        audio_mime_type: mimeType,
                         reference_text: document.getElementById('pronounce-text').textContent,
                         language: selectedLang,
                     }),

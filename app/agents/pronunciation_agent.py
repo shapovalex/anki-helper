@@ -1,9 +1,12 @@
 import base64
 import json
+import logging
 
 import httpx
 
 from app.schemas import OverallScore, PhonemeResult, PronunciationAssessResponse, WordResult
+
+log = logging.getLogger(__name__)
 
 
 class PronunciationAgent:
@@ -31,6 +34,10 @@ class PronunciationAgent:
             f"/speech/recognition/conversation/cognitiveservices/v1"
             f"?language={language}&format=detailed"
         )
+        log.info(
+            "Azure STT request: reference_text=%r language=%s mime=%s audio_bytes=%d",
+            reference_text, language, audio_mime_type, len(audio_bytes),
+        )
         response = await self._client.post(
             url,
             headers={
@@ -48,9 +55,14 @@ class PronunciationAgent:
                 f"Azure Speech request failed ({exc.response.status_code}): "
                 f"{exc.response.text[:200]}"
             ) from exc
-        return self._parse(response.json())
+        data = response.json()
+        log.info("Azure STT response: %s", json.dumps(data))
+        return self._parse(data)
 
     def _parse(self, data: dict) -> PronunciationAssessResponse:
+        status = data.get("RecognitionStatus", "")
+        if status not in ("Success", ""):
+            raise ValueError(f"Azure recognition failed: {status}")
         nbest = data.get("NBest", [{}])[0]
         pa = nbest.get("PronunciationAssessment", {})
         overall = OverallScore(

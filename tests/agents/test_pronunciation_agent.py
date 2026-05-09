@@ -102,3 +102,12 @@ async def test_assess_raises_value_error_on_http_error():
 
     with pytest.raises(ValueError, match="Azure Speech request failed"):
         await agent.assess(audio_bytes=b"fake", reference_text="bonjour", language="fr-FR")
+
+
+async def test_assess_raises_value_error_on_no_match():
+    transport = _FakeAzureTransport({"RecognitionStatus": "NoMatch", "Offset": 0, "Duration": 0})
+    client = httpx.AsyncClient(transport=transport)
+    agent = PronunciationAgent(client=client, api_key="fake-key", region="eastus")
+
+    with pytest.raises(ValueError, match="Azure recognition failed: NoMatch"):
+        await agent.assess(audio_bytes=b"fake", reference_text="bonjour", language="fr-FR")
