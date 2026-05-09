@@ -14,6 +14,8 @@ def mock_config():
     config.azure_key_set = False
     config.note_type_name = "French-Russian"
     config.sentence_note_type_name = "French-Russian-Sentence"
+    config.english_note_type_name = "English-Russian"
+    config.english_sentence_note_type_name = "English-Russian-Sentence"
     return config
 
 

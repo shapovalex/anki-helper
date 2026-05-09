@@ -69,6 +69,24 @@ class AddSentenceToAnkiRequest(BaseModel):
     audio_base64: str
 
 
+class AddEnglishWordToAnkiRequest(BaseModel):
+    deck: str
+    note_type: str
+    english_word: str = Field(min_length=1, max_length=100)
+    russian_word: str
+    example: str
+    english_word_audio_base64: str
+    example_audio_base64: str
+
+
+class AddEnglishSentenceToAnkiRequest(BaseModel):
+    deck: str
+    note_type: str
+    english_sentence: str = Field(min_length=1, max_length=500)
+    russian_sentence: str
+    audio_base64: str
+
+
 class SettingsResponse(BaseModel):
     model: str
     azure_region: str
@@ -76,6 +94,8 @@ class SettingsResponse(BaseModel):
     azure_key_set: bool
     note_type: str
     sentence_note_type: str
+    english_note_type: str
+    english_sentence_note_type: str
 
 
 class SettingsUpdateRequest(BaseModel):
@@ -85,6 +105,8 @@ class SettingsUpdateRequest(BaseModel):
     azure_api_key: str | None = Field(default=None, min_length=1)
     note_type: str | None = Field(default=None, min_length=1)
     sentence_note_type: str | None = Field(default=None, min_length=1)
+    english_note_type: str | None = Field(default=None, min_length=1)
+    english_sentence_note_type: str | None = Field(default=None, min_length=1)
 
 
 class PronunciationFieldsResponse(BaseModel):

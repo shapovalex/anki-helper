@@ -21,6 +21,8 @@ async def get_settings(
         azure_key_set=config.azure_key_set,
         note_type=config.note_type_name,
         sentence_note_type=config.sentence_note_type_name,
+        english_note_type=config.english_note_type_name,
+        english_sentence_note_type=config.english_sentence_note_type_name,
     )
 
 
@@ -42,6 +44,10 @@ async def update_settings(
         updates["NOTE_TYPE_NAME"] = body.note_type
     if body.sentence_note_type is not None:
         updates["SENTENCE_NOTE_TYPE_NAME"] = body.sentence_note_type
+    if body.english_note_type is not None:
+        updates["ENGLISH_NOTE_TYPE_NAME"] = body.english_note_type
+    if body.english_sentence_note_type is not None:
+        updates["ENGLISH_SENTENCE_NOTE_TYPE_NAME"] = body.english_sentence_note_type
     if updates:
         try:
             config.save(updates)
