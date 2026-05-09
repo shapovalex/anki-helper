@@ -51,12 +51,31 @@ class AddToAnkiResponse(BaseModel):
     note_id: int
 
 
+class SentenceTranslationResult(BaseModel):
+    russian_sentence: str
+    sentence_evaluation: str
+    is_valid: bool
+
+
+class SentenceGenerateRequest(BaseModel):
+    sentence: str
+
+
+class AddSentenceToAnkiRequest(BaseModel):
+    deck: str
+    note_type: str
+    french_sentence: str = Field(min_length=1, max_length=500)
+    russian_sentence: str
+    audio_base64: str
+
+
 class SettingsResponse(BaseModel):
     model: str
     azure_region: str
     openrouter_key_set: bool
     azure_key_set: bool
     note_type: str
+    sentence_note_type: str
 
 
 class SettingsUpdateRequest(BaseModel):
@@ -65,6 +84,7 @@ class SettingsUpdateRequest(BaseModel):
     openrouter_api_key: str | None = Field(default=None, min_length=1)
     azure_api_key: str | None = Field(default=None, min_length=1)
     note_type: str | None = Field(default=None, min_length=1)
+    sentence_note_type: str | None = Field(default=None, min_length=1)
 
 
 class PronunciationFieldsResponse(BaseModel):
