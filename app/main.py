@@ -46,6 +46,11 @@ async def word_lookup() -> FileResponse:
     return FileResponse("static/word-lookup.html")
 
 
+@app.get("/sentence-lookup")
+async def sentence_lookup() -> FileResponse:
+    return FileResponse("static/sentence-lookup.html")
+
+
 @app.get("/settings")
 async def settings() -> FileResponse:
     return FileResponse("static/settings.html")
