@@ -11,18 +11,63 @@
     <main class="page">
         <div class="page-header">
             <h1 class="page-title">Anki Helper</h1>
-            <p class="page-subtitle">AI-powered flashcard creation for French vocabulary.</p>
+            <p class="page-subtitle">AI-powered flashcard creation for French and English vocabulary.</p>
         </div>
 
-        <div class="home-hero">
-            <p>Look up a French word to generate its translation, usage example, and audio — then add it directly to your Anki deck.</p>
-            <div class="home-actions">
-                <a href="/word-lookup" class="btn btn-primary">Word Lookup →</a>
-                <a href="/decks" class="btn btn-secondary">View Decks</a>
-                <a href="/settings" class="btn btn-secondary">Settings</a>
+        <div id="anki-banner" class="banner banner-warn" style="display:none;">
+            Anki is not running. Start Anki with the AnkiConnect add-on to add cards. <a href="/help">Setup guide →</a>
+        </div>
+
+        <div class="feature-section">
+            <p class="section-heading">French</p>
+            <div class="feature-grid">
+                <a href="/word-lookup" class="feature-card">
+                    <div class="feature-card-title">Word Lookup →</div>
+                    <div class="feature-card-desc">Translation, example sentence, and audio for a French word.</div>
+                </a>
+                <a href="/sentence-lookup" class="feature-card">
+                    <div class="feature-card-title">Sentence Lookup →</div>
+                    <div class="feature-card-desc">Russian translation and audio for a French sentence.</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="feature-section">
+            <p class="section-heading">English</p>
+            <div class="feature-grid">
+                <a href="/english-word-lookup" class="feature-card">
+                    <div class="feature-card-title">Word Lookup →</div>
+                    <div class="feature-card-desc">Translation, example sentence, and audio for an English word.</div>
+                </a>
+                <a href="/english-sentence-lookup" class="feature-card">
+                    <div class="feature-card-title">Sentence Lookup →</div>
+                    <div class="feature-card-desc">Russian translation and audio for an English sentence.</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="feature-section">
+            <p class="section-heading">Practice</p>
+            <div class="feature-grid">
+                <a href="/pronunciation" class="feature-card feature-card-full">
+                    <div class="feature-card-title">Pronunciation Practice →</div>
+                    <div class="feature-card-desc">Practice speaking Anki cards aloud and get phoneme-level feedback from Azure Speech.</div>
+                </a>
             </div>
         </div>
     </main>
+
     <script src="/static/js/menu.js"></script>
+    <script>
+        async function checkAnkiStatus() {
+            try {
+                const res = await fetch('/api/decks');
+                if (!res.ok) throw new Error();
+            } catch {
+                document.getElementById('anki-banner').style.display = 'block';
+            }
+        }
+        checkAnkiStatus();
+    </script>
 </body>
 </html>
