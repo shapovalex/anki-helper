@@ -100,3 +100,24 @@ async def test_translate_raises_on_invalid_json():
 
     with pytest.raises(ValueError, match="non-JSON"):
         await agent.translate(text="Bonjour", language="fr-FR")
+
+
+async def test_translate_raises_on_missing_russian_text_key():
+    class _MissingKeyTransport(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request):
+            body = json.dumps({
+                "choices": [{"message": {"content": json.dumps({"wrong_key": "value"})}}]
+            }).encode()
+            return httpx.Response(
+                200,
+                content=body,
+                request=request,
+                headers={"content-type": "application/json"},
+            )
+
+    transport = _MissingKeyTransport()
+    client = httpx.AsyncClient(transport=transport)
+    agent = PronunciationTranslationAgent(client=client, api_key="fake", model="test")
+
+    with pytest.raises(ValueError, match="missing required fields"):
+        await agent.translate(text="Bonjour", language="fr-FR")

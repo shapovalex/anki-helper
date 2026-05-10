@@ -1,5 +1,8 @@
 import json
 import httpx
+from pydantic import ValidationError
+
+from app.schemas import PronunciationTranslateResponse
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -42,4 +45,7 @@ class PronunciationTranslationAgent:
             data = json.loads(content)
         except json.JSONDecodeError as exc:
             raise ValueError(f"OpenRouter returned non-JSON content: {content!r}") from exc
-        return data["russian_text"]
+        try:
+            return PronunciationTranslateResponse(**data).russian_text
+        except ValidationError as exc:
+            raise ValueError(f"OpenRouter response missing required fields: {exc}") from exc
