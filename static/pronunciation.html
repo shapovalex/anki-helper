@@ -460,7 +460,8 @@
             const url = `/api/pronunciation/card`
                 + `?deck=${encodeURIComponent(selectedDeck)}`
                 + `&field=${encodeURIComponent(selectedField)}`
-                + `&audio_field=${encodeURIComponent(selectedAudio)}`;
+                + `&audio_field=${encodeURIComponent(selectedAudio)}`
+                + (currentCardId ? `&exclude_card_id=${currentCardId}` : '');
 
             const res = await fetch(url).catch(() => null);
             if (!res || res.status === 404) {

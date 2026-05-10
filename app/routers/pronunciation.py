@@ -83,6 +83,7 @@ async def get_card(
     deck: str,
     field: str,
     audio_field: str,
+    exclude_card_id: int | None = None,
     anki_client: AnkiClient = Depends(get_anki_client),
 ) -> PronunciationCardResponse:
     try:
@@ -91,7 +92,8 @@ async def get_card(
         )
         if not card_ids:
             raise HTTPException(status_code=404, detail="No due or new cards in deck.")
-        card_id = random.choice(card_ids)
+        candidates = [c for c in card_ids if c != exclude_card_id] or card_ids
+        card_id = random.choice(candidates)
         cards_info = await anki_client.invoke("cardsInfo", cards=[card_id])
         card = cards_info[0]
         text = card["fields"].get(field, {}).get("value", "")
