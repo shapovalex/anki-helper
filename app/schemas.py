@@ -174,3 +174,12 @@ class PronunciationAnswerRequest(BaseModel):
 
 class PronunciationAnswerResponse(BaseModel):
     ok: bool
+
+
+class PronunciationTranslateRequest(BaseModel):
+    text: str
+    language: str  # BCP-47, e.g. "fr-FR"
+
+
+class PronunciationTranslateResponse(BaseModel):
+    russian_text: str
