@@ -6,9 +6,9 @@ ENV_LOCAL_PATH = Path(".env.local")
 _DEFAULTS: dict[str, str] = {
     "OPENROUTER_MODEL": "google/gemini-flash-1.5",
     "AZURE_TTS_REGION": "westeurope",
-    "NOTE_TYPE_NAME": "French-Russian",
+    "NOTE_TYPE_NAME": "French-Russian-Words",
     "SENTENCE_NOTE_TYPE_NAME": "French-Russian-Sentence",
-    "ENGLISH_NOTE_TYPE_NAME": "English-Russian",
+    "ENGLISH_NOTE_TYPE_NAME": "English-Russian-Words",
     "ENGLISH_SENTENCE_NOTE_TYPE_NAME": "English-Russian-Sentence",
 }
 
