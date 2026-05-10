@@ -6,6 +6,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.agents.pronunciation_agent import PronunciationAgent
+from app.agents.pronunciation_translation_agent import PronunciationTranslationAgent
 from app.agents.recommendations_agent import RecommendationsAgent
 from app.anki_client import AnkiClient, AnkiConnectError
 from app.config import ConfigManager
@@ -18,6 +19,8 @@ from app.schemas import (
     PronunciationFieldsResponse,
     PronunciationRecommendRequest,
     PronunciationRecommendResponse,
+    PronunciationTranslateRequest,
+    PronunciationTranslateResponse,
 )
 
 router = APIRouter(prefix="/api/pronunciation", tags=["pronunciation"])
@@ -51,6 +54,20 @@ def get_recommendations_agent(request: Request) -> RecommendationsAgent:
             detail="OpenRouter API key not configured. Go to Settings.",
         )
     return RecommendationsAgent(
+        client=request.app.state.http_client,
+        api_key=config.openrouter_api_key,
+        model=config.openrouter_model,
+    )
+
+
+def get_translation_agent(request: Request) -> PronunciationTranslationAgent:
+    config: ConfigManager = request.app.state.config
+    if not config.openrouter_key_set:
+        raise HTTPException(
+            status_code=503,
+            detail="OpenRouter API key not configured. Go to Settings.",
+        )
+    return PronunciationTranslationAgent(
         client=request.app.state.http_client,
         api_key=config.openrouter_api_key,
         model=config.openrouter_model,
@@ -143,6 +160,18 @@ async def recommendations(
             language=body.language,
             words=body.words,
         )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.post("/translate", response_model=PronunciationTranslateResponse)
+async def translate(
+    body: PronunciationTranslateRequest,
+    agent: PronunciationTranslationAgent = Depends(get_translation_agent),
+) -> PronunciationTranslateResponse:
+    try:
+        russian_text = await agent.translate(text=body.text, language=body.language)
+        return PronunciationTranslateResponse(russian_text=russian_text)
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 

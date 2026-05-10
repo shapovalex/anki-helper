@@ -7,16 +7,19 @@ import httpx
 
 from app.anki_client import AnkiConnectError
 from app.main import app
+from app.agents.pronunciation_translation_agent import PronunciationTranslationAgent
 from app.routers.pronunciation import (
     get_anki_client,
     get_pronunciation_agent,
     get_recommendations_agent,
+    get_translation_agent,
 )
 from app.schemas import (
     OverallScore,
     PhonemeResult,
     PronunciationAssessResponse,
     PronunciationRecommendResponse,
+    PronunciationTranslateResponse,
     WordResult,
 )
 
@@ -59,10 +62,18 @@ def mock_recommendations_agent():
 
 
 @pytest.fixture
-def client(mock_anki, mock_pronunciation_agent, mock_recommendations_agent):
+def mock_translation_agent():
+    agent = MagicMock()
+    agent.translate = AsyncMock(return_value="Привет")
+    return agent
+
+
+@pytest.fixture
+def client(mock_anki, mock_pronunciation_agent, mock_recommendations_agent, mock_translation_agent):
     app.dependency_overrides[get_anki_client] = lambda: mock_anki
     app.dependency_overrides[get_pronunciation_agent] = lambda: mock_pronunciation_agent
     app.dependency_overrides[get_recommendations_agent] = lambda: mock_recommendations_agent
+    app.dependency_overrides[get_translation_agent] = lambda: mock_translation_agent
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
@@ -195,3 +206,42 @@ def test_answer_returns_503_when_anki_not_running(client, mock_anki):
     mock_anki.invoke = AsyncMock(side_effect=httpx.ConnectError("refused"))
     response = client.post("/api/pronunciation/answer", json={"card_id": 1234, "ease": 1})
     assert response.status_code == 503
+
+
+def test_translate_returns_russian_text(client, mock_translation_agent):
+    response = client.post("/api/pronunciation/translate", json={
+        "text": "Bonjour le monde",
+        "language": "fr-FR",
+    })
+    assert response.status_code == 200
+    assert response.json()["russian_text"] == "Привет"
+    mock_translation_agent.translate.assert_called_once_with(
+        text="Bonjour le monde", language="fr-FR"
+    )
+
+
+def test_translate_returns_503_when_openrouter_not_configured():
+    from fastapi import HTTPException
+
+    def raise_503():
+        raise HTTPException(status_code=503, detail="OpenRouter API key not configured. Go to Settings.")
+
+    app.dependency_overrides[get_translation_agent] = raise_503
+    try:
+        with TestClient(app) as c:
+            response = c.post("/api/pronunciation/translate", json={
+                "text": "Bonjour",
+                "language": "fr-FR",
+            })
+        assert response.status_code == 503
+    finally:
+        app.dependency_overrides.pop(get_translation_agent, None)
+
+
+def test_translate_returns_502_on_agent_error(client, mock_translation_agent):
+    mock_translation_agent.translate = AsyncMock(side_effect=ValueError("OpenRouter returned non-JSON content"))
+    response = client.post("/api/pronunciation/translate", json={
+        "text": "Bonjour",
+        "language": "fr-FR",
+    })
+    assert response.status_code == 502
