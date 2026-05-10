@@ -829,6 +829,7 @@
 
         // ── Translation ───────────────────────────────────────────
         async function translateCard() {
+            if (!currentCardText) return;
             const btn = document.getElementById('translate-btn');
             const errorEl = document.getElementById('translate-error');
             btn.disabled = true;
