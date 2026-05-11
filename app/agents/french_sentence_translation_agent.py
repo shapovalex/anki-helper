@@ -9,8 +9,8 @@ _SYSTEM_PROMPT = (
     "You are a French language expert. When given a French sentence, "
     "respond ONLY with a JSON object (no markdown) with exactly these keys:\n"
     "- russian_sentence: Russian translation of the sentence\n"
-    "- sentence_evaluation: brief note on the grammar and naturalness of the French sentence\n"
-    "- is_valid: true if the sentence is grammatically correct French, false otherwise"
+    "- sentence_evaluation: brief note on the grammar including diacritics and naturalness of the French sentence\n"
+    "- is_valid: true if the sentence is grammatically correct French including diacritics, false otherwise"
 )
 
 
