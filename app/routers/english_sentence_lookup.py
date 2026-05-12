@@ -72,7 +72,7 @@ async def list_voices(
     agent: AudioAgent = Depends(get_audio_agent),
 ) -> VoicesResponse:
     try:
-        voices = await agent.list_voices()
+        voices = await agent.list_voices(locale_prefix="en-US")
         return VoicesResponse(voices=_filter_voices(voices, "en-"))
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail=f"Azure TTS error: {e.response.status_code}")
